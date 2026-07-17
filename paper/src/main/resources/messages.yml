@@ -1,0 +1,39 @@
+# Centralized user-facing text. Every chat message goes through rpg.serverutil.paper.message.
+# MessageManager, keyed by the dotted paths below - do not hardcode ChatColor + literal
+# strings in command/listener code, add a key here instead.
+
+prefix: "&8[&6ServerUtil&8] &r"
+
+command:
+  player-only: "&cプレイヤーのみ実行できます。"
+
+usage:
+  root: "&e使い方: /suadmin <reload|setspawn|worldsetup <world> [profile]> ..."
+  worldsetup: "&e使い方: /suadmin worldsetup <world> [profile]"
+
+admin:
+  reloaded: "&a設定を再読み込みしました。"
+
+spawn:
+  set: "&aワールド「{world}」のスポーン地点をここに設定しました。"
+
+worldsetup:
+  world-not-found: "&c指定したワールドが見つかりません: {world}"
+  profile-not-found: "&c指定したプロファイルが見つかりません: {profile}"
+  applied: "&aワールド「{world}」にプロファイル「{profile}」を適用しました。"
+  applied-with-warnings: "&eワールド「{world}」にプロファイル「{profile}」を適用しました（未対応キー: {keys}）。"
+
+hub:
+  not-configured: "&cハブの座標が設定されていません（config.yml の hub.teleport を確認してください）。"
+  world-not-found: "&cハブのワールドが見つかりません: {world}"
+  teleported: "&aハブに移動しました。"
+  proxy-not-available: "&cサーバー間転送は現在利用できません。"
+  proxy-failed: "&cハブへの転送に失敗しました。"
+
+join:
+  first-join-message: "&aようこそ、{player}さん！初めての参加ですね。"
+  join-message: "&a{player} が参加しました。"
+  quit-message: "&7{player} が退出しました。"
+
+healthcheck:
+  summary: "&7[HealthCheck] TPS: &f{tps} &7| Online: &f{online}"

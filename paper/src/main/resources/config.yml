@@ -1,0 +1,76 @@
+# OreliaServerUtil configuration. Sections are added here as each feature phase lands -
+# see orelia-serverutil-CONCEPT.md for the full feature roadmap and README.md for the
+# up-to-date command/config reference.
+
+# Enable this only when this server sits behind a Velocity proxy running
+# OreliaServerUtil(Velocity). "channel" must match the Velocity side's config.yml exactly.
+# Required for hub.mode: PROXY and for showing title/subtitle on incoming
+# server-switch-notify (see below).
+velocity:
+  enabled: false
+  channel: "orelia:serverutil"
+
+# /hub behavior. TELEPORT works standalone; PROXY requires OreliaServerUtil(Velocity) to be
+# running behind a Velocity proxy (see hub.mode reference in README.md).
+hub:
+  mode: TELEPORT   # TELEPORT | PROXY
+  teleport:
+    world: "world"
+    x: 0.5
+    y: 100.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+  proxy:
+    request-timeout-seconds: 5
+
+# /suadmin worldsetup <world> [profile] applies a named profile's gamerules in one go.
+# Any vanilla gamerule name (see https://minecraft.wiki/w/Game_rule) works as a key.
+world-setup:
+  profiles:
+    default:
+      gamerules:
+        doMobSpawning: false
+        doDaylightCycle: false
+        doWeatherCycle: false
+        keepInventory: true
+
+# Sidebar scoreboard. Other plugins register lines via rpg.serverutil.api.ScoreboardApi -
+# this plugin alone shows nothing by default.
+scoreboard:
+  title: "&6Orelia"
+  update-interval-ticks: 20
+
+# Tab-list name prefix/suffix. Other plugins register formatters via
+# rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
+tablist:
+  update-interval-ticks: 40
+
+# Welcome announcement shown a short delay after join (chat lines + optional title).
+announce:
+  enabled: true
+  delay-ticks: 20
+  lines:
+    - "&6==============================="
+    - "&fOreliaサーバーへようこそ！"
+    - "&6==============================="
+  title:
+    enabled: false
+    title: "&6Orelia"
+    subtitle: "&fようこそ"
+
+# Shows a quick TPS/online-count summary to operators on join.
+admin-healthcheck:
+  enabled: true
+
+# Title/subtitle shown when this server receives a SERVER_SWITCH_NOTIFY from the Velocity
+# proxy (a player just landed here from another backend). Requires velocity.enabled: true.
+server-switch-notify:
+  enabled: true
+  title: "&6Orelia"
+  subtitle: "&f{server} へようこそ"
+
+# Adds a sample sidebar line (level/balance) sourced from OreliaCore, if it happens to be
+# installed. Set to false to disable even when OreliaCore is present.
+core-integration:
+  enabled: true

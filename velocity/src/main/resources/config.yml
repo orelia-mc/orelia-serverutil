@@ -1,0 +1,15 @@
+# OreliaServerUtil (Velocity) configuration.
+
+# Plugin messaging channel shared with the Paper module - must match its config.yml.
+channel: "orelia:serverutil"
+
+hub:
+  # Registered server name (see velocity.toml [servers]) that /hub on the Paper side
+  # transfers players to when hub.mode: PROXY. Deliberately not sent by the Paper side -
+  # this proxy config alone decides the destination.
+  server-name: "hub"
+  fallback-message: "ハブサーバーが見つかりませんでした。"
+  request-timeout-seconds: 5
+
+server-switch-notify:
+  enabled: true
