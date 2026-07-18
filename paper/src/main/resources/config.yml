@@ -95,7 +95,30 @@ join:
   # is true - ignored otherwise.
   server-switch-wait-ticks: 5
 
-# Adds a sample sidebar line (level/balance) sourced from OreliaCore, if it happens to be
-# installed. Set to false to disable even when OreliaCore is present.
+# Feeds OreliaCore's level/job/balance data into this plugin's own display APIs, if
+# OreliaCore happens to be installed. Set to false to disable even when OreliaCore is
+# present; each sub-section below can also be disabled independently.
 core-integration:
   enabled: true
+  # Tab-list/nametag color (by job id, "&"-code style) + level suffix. Job ids are whatever
+  # OreliaCore's JobApi returns (e.g. FENCER/WARRIOR/ARCHER) - add/remove keys to match your
+  # jobs.yml, unmapped jobs just get no color override.
+  tablist:
+    enabled: true
+    suffix-format: " &7[Lv.{level}]"
+    job-colors:
+      FENCER: "&b"
+      WARRIOR: "&c"
+      ARCHER: "&a"
+  # Level shown on the right side of the tab-list entry.
+  tablist-value:
+    enabled: true
+    format: "&aLv.{level}"
+  # Job display name shown below the nametag.
+  belowname:
+    enabled: true
+    format: "&7{job}"
+  # Level + job shown next to the sender's name in chat.
+  chat:
+    enabled: true
+    placeholder-format: "&7[Lv.{level}] &b{job}&r "
