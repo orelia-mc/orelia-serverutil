@@ -12,17 +12,19 @@ import rpg.serverutil.api.ScoreboardApi;
 import rpg.serverutil.api.TabListApi;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
 import rpg.serverutil.paper.module.ServerUtilModule;
+import rpg.serverutil.paper.placeholder.PlaceholderService;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Optional bridge to OreliaCore (soft dependency): if any of {@link StatusApi}/
- * {@link EconomyApi}/{@link JobApi} happen to be published, registers config-driven
- * providers into every display API this plugin offers - sidebar line, tab-list name
- * color/suffix, tab-list right-side value, belowname, and chat placeholder. This plugin
- * works fine without OreliaCore installed at all (see plugin.yml {@code softdepend}); each
- * registration below independently null-guards the specific API it needs.
+ * {@link EconomyApi}/{@link JobApi} happen to be published, registers config-driven,
+ * {@link PlaceholderService}-resolved providers into every display API this plugin offers -
+ * sidebar line, tab-list name color/suffix, tab-list right-side value, belowname, and chat
+ * placeholder. This plugin works fine without OreliaCore installed at all (see plugin.yml
+ * {@code softdepend}); each registration below independently null-guards the specific API it
+ * needs.
  */
 public final class CoreIntegrationModule implements ServerUtilModule {
 
@@ -45,11 +47,12 @@ public final class CoreIntegrationModule implements ServerUtilModule {
             return; // OreliaCore not installed - nothing to integrate with.
         }
 
+        PlaceholderService placeholders = plugin.getPlaceholderService();
         registerScoreboardLine(plugin, config, statusApi, economyApi);
-        registerTabListName(plugin, config, jobApi, statusApi);
-        registerTabListValue(plugin, config, statusApi);
-        registerBelowname(plugin, config, jobApi, statusApi);
-        registerChatPlaceholder(plugin, config, jobApi, statusApi);
+        registerTabListName(plugin, config, jobApi, statusApi, placeholders);
+        registerTabListValue(plugin, config, statusApi, placeholders);
+        registerBelowname(plugin, config, jobApi, statusApi, placeholders);
+        registerChatPlaceholder(plugin, config, placeholders);
     }
 
     @Override
@@ -63,7 +66,8 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         }
     }
 
-    private void registerTabListName(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {
+    private void registerTabListName(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,
+                                      PlaceholderService placeholders) {
         if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.tablist.enabled", true)) {
             return;
         }
@@ -73,10 +77,11 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         }
         Map<String, ChatColor> jobColors = parseJobColors(config.getConfigurationSection("core-integration.tablist.job-colors"));
         String suffixFormat = config.getString("core-integration.tablist.suffix-format", " &7[Lv.{level}]");
-        tabListApi.registerFormatter(new CoreTabListFormatter(jobApi, statusApi, jobColors, suffixFormat));
+        tabListApi.registerFormatter(new CoreTabListFormatter(jobApi, placeholders, jobColors, suffixFormat));
     }
 
-    private void registerTabListValue(OreliaServerUtilPlugin plugin, YamlConfiguration config, StatusApi statusApi) {
+    private void registerTabListValue(OreliaServerUtilPlugin plugin, YamlConfiguration config, StatusApi statusApi,
+                                       PlaceholderService placeholders) {
         if (statusApi == null || !config.getBoolean("core-integration.tablist-value.enabled", true)) {
             return;
         }
@@ -85,10 +90,11 @@ public final class CoreIntegrationModule implements ServerUtilModule {
             return;
         }
         String valueFormat = config.getString("core-integration.tablist-value.format", "&aLv.{level}");
-        tabListApi.registerValueProvider(new CoreTabListValueProvider(statusApi, valueFormat));
+        tabListApi.registerValueProvider(new CoreTabListValueProvider(placeholders, valueFormat));
     }
 
-    private void registerBelowname(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {
+    private void registerBelowname(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,
+                                    PlaceholderService placeholders) {
         if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.belowname.enabled", true)) {
             return;
         }
@@ -97,10 +103,10 @@ public final class CoreIntegrationModule implements ServerUtilModule {
             return;
         }
         String format = config.getString("core-integration.belowname.format", "&7Lv.{level} {job}");
-        belownameApi.registerProvider(new CoreBelownameProvider(jobApi, statusApi, format));
+        belownameApi.registerProvider(new CoreBelownameProvider(placeholders, format));
     }
 
-    private void registerChatPlaceholder(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {
+    private void registerChatPlaceholder(OreliaServerUtilPlugin plugin, YamlConfiguration config, PlaceholderService placeholders) {
         if (!config.getBoolean("core-integration.chat.enabled", true)) {
             return;
         }
@@ -109,7 +115,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
             return;
         }
         String format = config.getString("core-integration.chat.placeholder-format", "&7[Lv.{level}] &b{job}&r ");
-        chatApi.registerProvider(new CoreChatPlaceholderProvider(jobApi, statusApi, format));
+        chatApi.registerProvider(new CoreChatPlaceholderProvider(placeholders, format));
     }
 
     /** Parses {@code job-colors} entries written in the same {@code &}-code style as every other config color in this plugin (e.g. {@code "&b"}). */

@@ -13,6 +13,7 @@ import rpg.serverutil.paper.integration.CoreIntegrationModule;
 import rpg.serverutil.paper.join.JoinMessageModule;
 import rpg.serverutil.paper.message.MessageManager;
 import rpg.serverutil.paper.module.ServerUtilModuleManager;
+import rpg.serverutil.paper.placeholder.PlaceholderService;
 import rpg.serverutil.paper.scoreboard.ScoreboardModule;
 import rpg.serverutil.paper.spawn.SpawnModule;
 import rpg.serverutil.paper.tablist.TabListModule;
@@ -34,6 +35,7 @@ public final class OreliaServerUtilPlugin extends JavaPlugin {
 
     private ConfigManager configManager;
     private MessageManager messageManager;
+    private PlaceholderService placeholderService;
     private ServerUtilModuleManager moduleManager;
 
     @Override
@@ -41,6 +43,7 @@ public final class OreliaServerUtilPlugin extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.configManager.register("config.yml");
         this.messageManager = new MessageManager(configManager.register("messages.yml"));
+        this.placeholderService = new PlaceholderService(this);
 
         this.moduleManager = new ServerUtilModuleManager(this);
 
@@ -88,6 +91,10 @@ public final class OreliaServerUtilPlugin extends JavaPlugin {
 
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public PlaceholderService getPlaceholderService() {
+        return placeholderService;
     }
 
     public ServerUtilModuleManager getModuleManager() {

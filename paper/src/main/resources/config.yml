@@ -1,6 +1,41 @@
 # OreliaServerUtil configuration. Sections are added here as each feature phase lands -
 # see orelia-serverutil-CONCEPT.md for the full feature roadmap and README.md for the
 # up-to-date command/config reference.
+#
+# ============================== PLACEHOLDER CHEAT SHEET ==============================
+# Every "format"/"suffix-format"/"placeholder-format" key below (and announce.lines/
+# announce.title) is resolved through rpg.serverutil.paper.placeholder.PlaceholderService,
+# which understands these tokens:
+#
+#   Always available (no OreliaCore needed):
+#     {online}      - players currently online on this server
+#     {max_online}  - this server's player slot limit
+#     {tps}         - this server's TPS, 1-minute average, clamped to 20.0
+#     {ping}        - the VIEWING player's ping in ms
+#     {world}       - the viewing player's current world name
+#     {player}/{name} - the viewing player's name
+#     {server}      - this server's own name (set it below in "server.name" - Paper has no
+#                     built-in way to know what Velocity calls it)
+#     {date}        - yyyy-MM-dd
+#     {time}        - HH:mm:ss
+#
+#   OreliaCore-sourced (silently left as literal text if OreliaCore isn't installed):
+#     {level}       - the player's OreliaCore level
+#     {job}         - the player's current job display name (empty if no job chosen yet)
+#     {money}       - the player's OreliaCore balance (whole number)
+#     {health}      - the player's CURRENT OreliaCore HP (not vanilla health - this is
+#                     Orelia's own RPG health pool)
+#     {max_health}  - the player's MAX OreliaCore HP
+#
+#   If the PlaceholderAPI plugin is also installed, any %placeholder% syntax it supports
+#   works too (resolved last, after all tokens above) - e.g. a permissions plugin's
+#   %luckperms_prefix% for a rank tag.
+# =======================================================================================
+
+# This server's own display name, used by the {server} placeholder above and by
+# server-switch-notify's {server} token. Leave blank to just omit it wherever it's used.
+server:
+  name: ""
 
 # Enable this only when this server sits behind a Velocity proxy running
 # OreliaServerUtil(Velocity). "channel" must match the Velocity side's config.yml exactly.
@@ -51,6 +86,15 @@ scoreboard:
 # rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
 tablist:
   update-interval-ticks: 40
+  # Text shown above/below the player list. Each list entry is one line (placeholders
+  # resolved per-viewer, see the cheat sheet above). Off by default.
+  header-footer:
+    enabled: false
+    header:
+      - "&6&l{server}"
+      - "&7Online: &f{online}&7/&f{max_online}"
+    footer:
+      - "&7TPS: &f{tps}"
 
 # Text shown below every player's nametag (health, faction, ...). Other plugins register
 # values via rpg.serverutil.api.BelownameApi. Off by default - once enabled, "title" is shown
@@ -87,6 +131,9 @@ admin-healthcheck:
 
 # Title/subtitle shown when this server receives a SERVER_SWITCH_NOTIFY from the Velocity
 # proxy (a player just landed here from another backend). Requires velocity.enabled: true.
+# Note: {server} here is a special case, NOT the PlaceholderService token from the cheat
+# sheet above - it's always the live destination server name Velocity itself reported for
+# this specific switch, regardless of what "server.name" is set to.
 server-switch-notify:
   enabled: true
   title: "&6Orelia"
