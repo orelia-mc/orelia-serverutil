@@ -28,6 +28,8 @@ import java.util.Map;
  */
 public final class CoreIntegrationModule implements ServerUtilModule {
 
+    private OreliaServerUtilPlugin plugin;
+
     @Override
     public String getName() {
         return "core-integration";
@@ -35,6 +37,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
 
     @Override
     public void onEnable(OreliaServerUtilPlugin plugin) {
+        this.plugin = plugin;
         YamlConfiguration config = plugin.getConfigManager().get("config.yml").get();
         if (!config.getBoolean("core-integration.enabled", true)) {
             return;
@@ -57,6 +60,17 @@ public final class CoreIntegrationModule implements ServerUtilModule {
 
     @Override
     public void onDisable() {
+    }
+
+    /**
+     * Every {@code register*} method below re-registers under a stable provider id (each
+     * {@code Core*Provider}'s {@code getId()} never changes), so simply re-running the whole
+     * enable sequence picks up fresh config.yml formats without disturbing providers registered
+     * by anything else - {@code Map#put} on an existing id just replaces that one entry.
+     */
+    @Override
+    public void onReload() {
+        onEnable(plugin);
     }
 
     private void registerScoreboardLine(OreliaServerUtilPlugin plugin, YamlConfiguration config, StatusApi statusApi, EconomyApi economyApi) {

@@ -15,11 +15,12 @@ import rpg.serverutil.paper.module.ServerUtilModule;
 /**
  * Customizes join/quit chat messages, distinguishing a player's very first join. When behind a
  * Velocity proxy running OreliaServerUtil(Velocity), a network server switch instead gets the
- * "{player} | {from} -> {to}" format: the vanilla message is suppressed and re-sent a few ticks
- * later, once {@link VelocityBridgeModule}'s incoming SERVER_SWITCH_(LEAVE_)NOTIFY had a chance
- * to arrive - falling back to the normal join/quit text if none did (fresh login / full
- * disconnect from the proxy, or velocity.enabled is off, in which case this behaves exactly as
- * before with zero delay).
+ * "{player} | {from} -> {to}" format: the vanilla message is suppressed, and
+ * {@link VelocityBridgeModule#awaitArrival}/{@code awaitDeparture} broadcast it the moment the
+ * matching SERVER_SWITCH_(LEAVE_)NOTIFY is available - immediately if it already arrived, or as
+ * soon as it does, falling back to the normal join/quit text only if nothing arrives within
+ * {@code join.server-switch-wait-ticks} (fresh login / full disconnect from the proxy, or
+ * velocity.enabled is off, in which case this behaves exactly as before with zero delay).
  */
 public final class JoinMessageModule implements ServerUtilModule, Listener {
 
@@ -50,7 +51,7 @@ public final class JoinMessageModule implements ServerUtilModule, Listener {
         }
         event.setJoinMessage(null);
         Player player = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastJoin(player), waitTicks());
+        velocityBridge.awaitArrival(player.getUniqueId(), notify -> broadcastJoin(player, notify), waitTicks());
     }
 
     @EventHandler
@@ -61,11 +62,10 @@ public final class JoinMessageModule implements ServerUtilModule, Listener {
         }
         event.setQuitMessage(null);
         Player player = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastQuit(player), waitTicks());
+        velocityBridge.awaitDeparture(player.getUniqueId(), notify -> broadcastQuit(player, notify), waitTicks());
     }
 
-    private void broadcastJoin(Player player) {
-        ServerSwitchNotify notify = velocityBridge.consumeArrival(player.getUniqueId()).orElse(null);
+    private void broadcastJoin(Player player, ServerSwitchNotify notify) {
         String message = notify != null && notify.fromServer() != null
                 ? plugin.getMessageManager().format("join.server-switch-message",
                         "player", player.getName(), "from", notify.fromServer(), "to", notify.toServer())
@@ -73,8 +73,7 @@ public final class JoinMessageModule implements ServerUtilModule, Listener {
         Bukkit.broadcastMessage(message);
     }
 
-    private void broadcastQuit(Player player) {
-        ServerSwitchNotify notify = velocityBridge.consumeDeparture(player.getUniqueId()).orElse(null);
+    private void broadcastQuit(Player player, ServerSwitchNotify notify) {
         String message = notify != null
                 ? plugin.getMessageManager().format("join.server-switch-leave-message",
                         "player", player.getName(), "from", notify.fromServer(), "to", notify.toServer())

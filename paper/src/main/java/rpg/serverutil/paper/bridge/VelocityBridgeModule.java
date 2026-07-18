@@ -15,7 +15,6 @@ import rpg.serverutil.paper.module.ServerUtilModule;
 import rpg.serverutil.paper.util.ColorUtil;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -36,11 +35,17 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
     private boolean enabled;
     private String channel;
     private final Map<UUID, PendingRequest> pending = new ConcurrentHashMap<>();
-    // Populated by incoming SERVER_SWITCH_(LEAVE_)NOTIFY, consumed by JoinMessageModule's
-    // delayed join/quit broadcast so it can tell a network switch apart from a fresh login/a
-    // true disconnect (see the plan's Phase 6 design notes).
+    // SERVER_SWITCH_(LEAVE_)NOTIFY and the matching PlayerJoinEvent/PlayerQuitEvent race each
+    // other - either can arrive first, since one comes from Velocity over the network and the
+    // other from Paper's own login sequence. Whichever arrives first stashes itself here;
+    // whichever arrives second (or the timeout in awaitArrival/awaitDeparture) consumes it. This
+    // used to be a fixed-delay "wait N ticks then check" in JoinMessageModule, which lost the
+    // race whenever the notify took longer than that delay to arrive - see awaitArrival/
+    // awaitDeparture below for the fix.
     private final Map<UUID, ServerSwitchNotify> pendingArrivals = new ConcurrentHashMap<>();
     private final Map<UUID, ServerSwitchNotify> pendingDepartures = new ConcurrentHashMap<>();
+    private final Map<UUID, Consumer<ServerSwitchNotify>> arrivalWaiters = new ConcurrentHashMap<>();
+    private final Map<UUID, Consumer<ServerSwitchNotify>> departureWaiters = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -114,14 +119,43 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
         }
     }
 
-    /** Consumed once by {@code JoinMessageModule}'s delayed join broadcast; empty if none arrived in time. */
-    public Optional<ServerSwitchNotify> consumeArrival(UUID playerId) {
-        return Optional.ofNullable(pendingArrivals.remove(playerId));
+    /**
+     * Calls {@code onReady} with the matching notify the moment it's available - immediately if
+     * SERVER_SWITCH_NOTIFY already arrived before this player's join was even processed, or as
+     * soon as it arrives afterward. If nothing arrives within {@code timeoutTicks}, calls
+     * {@code onReady} with {@code null} (plain join, not a network switch). Used by
+     * {@code JoinMessageModule} instead of a fixed "wait then check" delay, which used to lose
+     * the race whenever the notify was slower than the wait.
+     */
+    public void awaitArrival(UUID playerId, Consumer<ServerSwitchNotify> onReady, long timeoutTicks) {
+        ServerSwitchNotify existing = pendingArrivals.remove(playerId);
+        if (existing != null) {
+            onReady.accept(existing);
+            return;
+        }
+        arrivalWaiters.put(playerId, onReady);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Consumer<ServerSwitchNotify> waiter = arrivalWaiters.remove(playerId);
+            if (waiter != null) {
+                waiter.accept(null);
+            }
+        }, timeoutTicks);
     }
 
-    /** Consumed once by {@code JoinMessageModule}'s delayed quit broadcast; empty if none arrived in time. */
-    public Optional<ServerSwitchNotify> consumeDeparture(UUID playerId) {
-        return Optional.ofNullable(pendingDepartures.remove(playerId));
+    /** Same as {@link #awaitArrival} but for SERVER_SWITCH_LEAVE_NOTIFY / the quitting player's departure. */
+    public void awaitDeparture(UUID playerId, Consumer<ServerSwitchNotify> onReady, long timeoutTicks) {
+        ServerSwitchNotify existing = pendingDepartures.remove(playerId);
+        if (existing != null) {
+            onReady.accept(existing);
+            return;
+        }
+        departureWaiters.put(playerId, onReady);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Consumer<ServerSwitchNotify> waiter = departureWaiters.remove(playerId);
+            if (waiter != null) {
+                waiter.accept(null);
+            }
+        }, timeoutTicks);
     }
 
     private void handleHubTransferResult(byte[] message) {
@@ -136,13 +170,27 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
 
     private void handleServerSwitchNotify(byte[] message) {
         ServerSwitchNotify notify = ProtocolCodec.decodeServerSwitchNotify(message);
-        pendingArrivals.put(notify.playerId(), notify);
-        Bukkit.getScheduler().runTask(plugin, () -> showSwitchTitle(notify));
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            showSwitchTitle(notify);
+            Consumer<ServerSwitchNotify> waiter = arrivalWaiters.remove(notify.playerId());
+            if (waiter != null) {
+                waiter.accept(notify);
+            } else {
+                pendingArrivals.put(notify.playerId(), notify);
+            }
+        });
     }
 
     private void handleServerSwitchLeaveNotify(byte[] message) {
         ServerSwitchNotify notify = ProtocolCodec.decodeServerSwitchLeaveNotify(message);
-        pendingDepartures.put(notify.playerId(), notify);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Consumer<ServerSwitchNotify> waiter = departureWaiters.remove(notify.playerId());
+            if (waiter != null) {
+                waiter.accept(notify);
+            } else {
+                pendingDepartures.put(notify.playerId(), notify);
+            }
+        });
     }
 
     private void showSwitchTitle(ServerSwitchNotify notify) {
