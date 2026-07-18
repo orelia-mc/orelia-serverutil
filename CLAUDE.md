@@ -89,7 +89,8 @@ not the display name) - see `rpg.serverutil.paper.integration.Core*Provider`/`Co
 ### Placeholders (`rpg.serverutil.paper.placeholder.PlaceholderService`)
 
 Every config `format`/`suffix-format`/`placeholder-format`/`lines` key across this plugin
-(`Core*Provider`, `AnnounceModule`, `TabListModule`'s header/footer) is resolved through one
+(`Core*Provider`, `AnnounceModule`, `TabListModule`'s header/footer, `ChatModule`'s hover
+tooltip lines) is resolved through one
 shared `PlaceholderService` instance (`OreliaServerUtilPlugin.getPlaceholderService()`) instead
 of each hand-rolling its own `String#replace` chain. It resolves built-in tokens
 (`{online}`/`{tps}`/`{ping}`/`{world}`/`{player}`/`{server}`/`{date}`/`{time}`) unconditionally,
