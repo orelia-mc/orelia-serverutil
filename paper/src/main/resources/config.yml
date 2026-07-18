@@ -80,13 +80,21 @@ world-setup:
         locator_bar: false
 
 # Sidebar scoreboard. Other plugins register lines via rpg.serverutil.api.ScoreboardApi -
-# this plugin alone shows nothing by default.
+# "lines" below is this plugin's own config-driven block (placeholders resolved per-viewer,
+# see the cheat sheet above), merged in alongside anything other plugins register. Leave
+# "lines" empty to show only what other plugins provide.
 scoreboard:
   title: "&6Orelia"
   update-interval-ticks: 20
   # Hides the red score numbers on the right side of the sidebar (Paper 1.20.3+ only;
   # older clients still show the raw number since the format hint is ignored).
   hide-numbers: true
+  # Where this block renders relative to other registered ScoreboardLineProviders - higher
+  # numbers render nearer the top. OreliaCore's own level/money line (if installed) uses 100.
+  lines-priority: 0
+  lines:
+    - "&7Online: &f{online}&7/&f{max_online}"
+    - "&7TPS: &f{tps}"
 
 # Tab-list name prefix/suffix. Other plugins register formatters via
 # rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
@@ -103,10 +111,11 @@ tablist:
       - "&7TPS: &f{tps}"
 
 # Text shown below every player's nametag (health, faction, ...). Other plugins register
-# values via rpg.serverutil.api.BelownameApi. Off by default - once enabled, "title" is shown
-# to everyone even without a registered provider.
+# values via rpg.serverutil.api.BelownameApi - there is no separate "enabled" flag, this
+# shows itself automatically the moment any provider (e.g. core-integration.belowname below)
+# actually produces a value, and hides again once none do. "title" supports placeholders
+# (resolved per-viewer, see the cheat sheet above).
 belowname:
-  enabled: false
   title: "&dSuffix"
   update-interval-ticks: 20
 
@@ -156,10 +165,12 @@ server-switch-notify:
   subtitle: "&7Server Switched to {server}."
 
 join:
-  # How long (in ticks) JoinMessageModule waits for an incoming SERVER_SWITCH_(LEAVE_)NOTIFY
-  # before falling back to the normal join/quit message. Only relevant when velocity.enabled
-  # is true - ignored otherwise.
-  server-switch-wait-ticks: 5
+  # Upper bound (in ticks) JoinMessageModule waits for an incoming SERVER_SWITCH_(LEAVE_)NOTIFY
+  # before giving up and falling back to the normal join/quit message - in practice the switch
+  # message shows the instant the notify arrives (often faster than this), this is only a
+  # safety net for a slow/lagged proxy connection. Only relevant when velocity.enabled is true
+  # - ignored otherwise.
+  server-switch-wait-ticks: 20
 
 # Feeds OreliaCore's level/job/balance data into this plugin's own display APIs, if
 # OreliaCore happens to be installed. Set to false to disable even when OreliaCore is

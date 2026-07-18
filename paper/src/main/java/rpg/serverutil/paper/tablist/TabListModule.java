@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
+import org.bukkit.scheduler.BukkitTask;
 import rpg.serverutil.api.TabListApi;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
 import rpg.serverutil.paper.module.ServerUtilModule;
@@ -15,7 +16,10 @@ import java.util.List;
 
 public final class TabListModule implements ServerUtilModule {
 
+    private OreliaServerUtilPlugin plugin;
     private TabListManager manager;
+    private BukkitTask tickTask;
+    private BukkitTask headerFooterTask;
 
     @Override
     public String getName() {
@@ -24,21 +28,40 @@ public final class TabListModule implements ServerUtilModule {
 
     @Override
     public void onEnable(OreliaServerUtilPlugin plugin) {
+        this.plugin = plugin;
         YamlConfiguration config = plugin.getConfigManager().get("config.yml").get();
         long intervalTicks = config.getLong("tablist.update-interval-ticks", 40L);
 
         this.manager = new TabListManager();
         plugin.getServer().getServicesManager().register(TabListApi.class, manager, plugin, ServicePriority.Normal);
-        plugin.getServer().getScheduler().runTaskTimer(plugin, manager::tick, intervalTicks, intervalTicks);
+        this.tickTask = plugin.getServer().getScheduler().runTaskTimer(plugin, manager::tick, intervalTicks, intervalTicks);
 
         if (config.getBoolean("tablist.header-footer.enabled", false)) {
-            plugin.getServer().getScheduler().runTaskTimer(plugin,
+            this.headerFooterTask = plugin.getServer().getScheduler().runTaskTimer(plugin,
                     () -> tickHeaderFooter(plugin), intervalTicks, intervalTicks);
         }
     }
 
     @Override
     public void onDisable() {
+    }
+
+    @Override
+    public void onReload() {
+        YamlConfiguration config = plugin.getConfigManager().get("config.yml").get();
+        long intervalTicks = config.getLong("tablist.update-interval-ticks", 40L);
+
+        tickTask.cancel();
+        tickTask = plugin.getServer().getScheduler().runTaskTimer(plugin, manager::tick, intervalTicks, intervalTicks);
+
+        if (headerFooterTask != null) {
+            headerFooterTask.cancel();
+            headerFooterTask = null;
+        }
+        if (config.getBoolean("tablist.header-footer.enabled", false)) {
+            headerFooterTask = plugin.getServer().getScheduler().runTaskTimer(plugin,
+                    () -> tickHeaderFooter(plugin), intervalTicks, intervalTicks);
+        }
     }
 
     public TabListManager getManager() {

@@ -86,6 +86,26 @@ provider registration independently null-guards the specific OreliaCore API it n
 color on the tab-list Team - kept separate from placeholders since it needs the raw job id,
 not the display name) - see `rpg.serverutil.paper.integration.Core*Provider`/`CoreTabListFormatter`.
 
+### `/suadmin reload` (`ServerUtilModule.onReload()`)
+
+Most modules already read config.yml fresh on every use (`AnnounceModule`, `ChatModule`,
+`HealthCheckModule`, `ConfigScoreboardLineProvider`), so they need no explicit `onReload()` -
+`ConfigManager.reloadAll()` re-reading the underlying `YamlConfiguration` is enough. The
+exception is any module whose `onEnable()` captures a config value into a long-lived field
+(a manager's title/format string, a scheduled task's interval) instead of re-reading it each
+time - those values go stale after `/suadmin reload` unless the module implements
+`onReload()` to push fresh config into the existing objects. `ScoreboardModule`/
+`BelownameModule`/`TabListModule` do this by exposing mutator methods on their manager
+(`ScoreboardManager.updateSettings`, `BelownameManager.setTitleTemplate`) and by tracking
+their own `BukkitTask` so they can cancel + reschedule it with a new interval, rather than
+recreating the manager itself (which would silently drop every provider some other plugin had
+already registered into it). `CoreIntegrationModule.onReload()` takes the simpler path of
+just calling `onEnable(plugin)` again - safe only because every `Core*Provider`'s `getId()` is
+a stable constant, so re-registering just replaces that one map entry in the target manager
+without touching providers registered by anyone else. When adding a module that caches a
+config value in a field, follow one of these two patterns rather than leaving `onReload()` as
+the interface's no-op default.
+
 ### Placeholders (`rpg.serverutil.paper.placeholder.PlaceholderService`)
 
 Every config `format`/`suffix-format`/`placeholder-format`/`lines` key across this plugin
@@ -145,8 +165,13 @@ unrelated mechanisms - separate `Objective`s in the `PLAYER_LIST`/`BELOW_NAME` d
 using `io.papermc.paper.scoreboard.numbers.NumberFormat` (not `org.bukkit.scoreboard.*|` -
 easy to reach for the wrong package) to show arbitrary text instead of a plain number
 (Paper 1.20.3+; older clients silently see the raw score number instead since the format hint
-is ignored). Belowname's `title` is shared across every target (Minecraft only allows one
-title per objective); only the per-target value differs.
+is ignored). Belowname's `title` is shared across every *target* (Minecraft only allows one
+title per objective) but resolved per-*viewer* through `PlaceholderService` (each viewer has
+their own personal board, so e.g. `{ping}` in the title reflects the viewer's own ping) -
+only the per-target value differs by target. `BelownameModule` has no "enabled" flag:
+`BelownameManager` auto-hides the objective whenever no registered provider currently resolves
+a value for anyone online, and shows it again the moment one does - this is what lets
+`CoreIntegrationModule`'s belowname provider work standalone, without a second flag to flip.
 
 ### Velocity <-> Paper bridge (`rpg.serverutil.common.protocol`, `*.bridge`)
 
@@ -161,16 +186,29 @@ binary framing, same convention as the sibling MultiAccount project) - three mes
     `PaperCommandBridge` (`VelocityBridgeModule.sendHubRequest`).
 - `HUB_TRANSFER_RESULT` (Velocity -> Paper): outcome, delivered back through the *same*
   `ServerConnection` the request came in on.
-- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper, to the *destination*): best-effort only,
-  triggers a title display (`VelocityBridgeModule.showSwitchTitle`) and is cached in
-  `VelocityBridgeModule.pendingArrivals` for `JoinMessageModule`'s delayed join broadcast to
-  consume. A dropped message here is never treated as an error.
+- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper, to the *destination*): best-effort only, triggers
+  a title display (`VelocityBridgeModule.showSwitchTitle`) and feeds `JoinMessageModule`'s join
+  broadcast via `VelocityBridgeModule.awaitArrival`. A dropped message here is never treated as
+  an error.
 - `SERVER_SWITCH_LEAVE_NOTIFY` (Velocity -> Paper, to the *source*): same payload shape as
-  `SERVER_SWITCH_NOTIFY` (different wire tag), cached in `pendingDepartures` for
-  `JoinMessageModule`'s delayed quit broadcast. Since the departing player is no longer
-  connected to the source server by the time this fires, Velocity relays it through *any
-  other* online player still on that server (`ServerSwitchListener.sendLeaveNotify`) - if
-  nobody remains there, nothing is sent (nobody would see the leave message anyway).
+  `SERVER_SWITCH_NOTIFY` (different wire tag), feeds `JoinMessageModule`'s quit broadcast via
+  `VelocityBridgeModule.awaitDeparture`. Since the departing player is no longer connected to
+  the source server by the time this fires, Velocity relays it through *any other* online
+  player still on that server (`ServerSwitchListener.sendLeaveNotify`) - if nobody remains
+  there, nothing is sent (nobody would see the leave message anyway).
+
+**`awaitArrival`/`awaitDeparture` race**: `SERVER_SWITCH_(LEAVE_)NOTIFY` arrives over the
+network from Velocity while `PlayerJoinEvent`/`PlayerQuitEvent` fires from Paper's own login
+sequence - either can happen first, and there's no guaranteed ordering between them. An
+earlier version of this bridge had `JoinMessageModule` wait a fixed number of ticks after the
+Bukkit event and then poll a cache, which silently fell back to a plain join/quit message
+whenever the notify was slower than that fixed wait - the exact failure the destination
+server's join message showing as a plain join instead of a switch message turned out to be.
+`awaitArrival`/`awaitDeparture` fix this by letting whichever side arrives first register
+itself (`pendingArrivals`/`pendingDepartures` if the notify wins, `arrivalWaiters`/
+`departureWaiters` if the Bukkit event wins), so the second arrival always resolves the
+broadcast immediately instead of guessing a delay. `join.server-switch-wait-ticks` is now only
+a worst-case timeout (network stall / dropped packet), not the typical-case latency.
 
 Sending a plugin message requires an online `Player` as the carrier - there is no
 console-triggered path, same limitation as MultiAccount's bridge.

@@ -34,8 +34,8 @@ public final class ScoreboardManager implements ScoreboardApi {
     private static final String TEAM_PREFIX = "su_sb_";
     private static final int MAX_LINES = ChatColor.values().length;
 
-    private final String title;
-    private final boolean hideNumbers;
+    private volatile String title;
+    private volatile boolean hideNumbers;
     private final Map<String, ScoreboardLineProvider> providers = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> lastRenderedLines = new ConcurrentHashMap<>();
 
@@ -44,9 +44,17 @@ public final class ScoreboardManager implements ScoreboardApi {
         this.hideNumbers = hideNumbers;
     }
 
+    /** Re-read by {@code /suadmin reload} - forces every online player's board to redraw next tick. */
+    public void updateSettings(String title, boolean hideNumbers) {
+        this.title = title;
+        this.hideNumbers = hideNumbers;
+        lastRenderedLines.clear();
+    }
+
     @Override
     public void registerProvider(ScoreboardLineProvider provider) {
         providers.put(provider.getId(), provider);
+        lastRenderedLines.clear();
     }
 
     @Override
