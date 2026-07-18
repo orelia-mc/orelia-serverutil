@@ -30,10 +30,13 @@ world-setup:
   profiles:
     default:
       gamerules:
-        doMobSpawning: false
-        doDaylightCycle: false
-        doWeatherCycle: false
-        keepInventory: true
+        spawn_mobs: false
+        advance_time: false
+        advance_weather: false
+        keep_inventory: true
+        command_block_output: false
+        mob_drops: false
+        locator_bar: false
 
 # Sidebar scoreboard. Other plugins register lines via rpg.serverutil.api.ScoreboardApi -
 # this plugin alone shows nothing by default.
@@ -42,7 +45,7 @@ scoreboard:
   update-interval-ticks: 20
   # Hides the red score numbers on the right side of the sidebar (Paper 1.20.3+ only;
   # older clients still show the raw number since the format hint is ignored).
-  hide-numbers: false
+  hide-numbers: true
 
 # Tab-list name prefix/suffix. Other plugins register formatters via
 # rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
@@ -54,7 +57,7 @@ tablist:
 # to everyone even without a registered provider.
 belowname:
   enabled: false
-  title: "&cHealth"
+  title: "&dSuffix"
   update-interval-ticks: 20
 
 # Chat formatting. {placeholder} is resolved via rpg.serverutil.api.ChatApi (level/title/rank
@@ -74,9 +77,9 @@ announce:
     - "&fOreliaサーバーへようこそ！"
     - "&6==============================="
   title:
-    enabled: false
-    title: "&6Orelia"
-    subtitle: "&fようこそ"
+    enabled: true
+    title: "&6Orelia Server"
+    subtitle: "&eWelcome!"
 
 # Shows a quick TPS/online-count summary to operators on join.
 admin-healthcheck:
@@ -87,7 +90,7 @@ admin-healthcheck:
 server-switch-notify:
   enabled: true
   title: "&6Orelia"
-  subtitle: "&f{server} へようこそ"
+  subtitle: "&7Server Switched to {server}."
 
 join:
   # How long (in ticks) JoinMessageModule waits for an incoming SERVER_SWITCH_(LEAVE_)NOTIFY
@@ -113,11 +116,11 @@ core-integration:
   # Level shown on the right side of the tab-list entry.
   tablist-value:
     enabled: true
-    format: "&aLv.{level}"
+    format: "&a{ping}ms"
   # Job display name shown below the nametag.
   belowname:
     enabled: true
-    format: "&7{job}"
+    format: "&7Lv.{level} {job}"
   # Level + job shown next to the sender's name in chat.
   chat:
     enabled: true

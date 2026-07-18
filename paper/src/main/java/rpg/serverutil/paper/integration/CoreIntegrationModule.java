@@ -48,7 +48,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         registerScoreboardLine(plugin, config, statusApi, economyApi);
         registerTabListName(plugin, config, jobApi, statusApi);
         registerTabListValue(plugin, config, statusApi);
-        registerBelowname(plugin, config, jobApi);
+        registerBelowname(plugin, config, jobApi, statusApi);
         registerChatPlaceholder(plugin, config, jobApi, statusApi);
     }
 
@@ -64,7 +64,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
     }
 
     private void registerTabListName(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {
-        if (jobApi == null || !config.getBoolean("core-integration.tablist.enabled", true)) {
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.tablist.enabled", true)) {
             return;
         }
         TabListApi tabListApi = plugin.getServer().getServicesManager().load(TabListApi.class);
@@ -88,16 +88,16 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         tabListApi.registerValueProvider(new CoreTabListValueProvider(statusApi, valueFormat));
     }
 
-    private void registerBelowname(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi) {
-        if (jobApi == null || !config.getBoolean("core-integration.belowname.enabled", true)) {
+    private void registerBelowname(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.belowname.enabled", true)) {
             return;
         }
         BelownameApi belownameApi = plugin.getServer().getServicesManager().load(BelownameApi.class);
         if (belownameApi == null) {
             return;
         }
-        String format = config.getString("core-integration.belowname.format", "&7{job}");
-        belownameApi.registerProvider(new CoreBelownameProvider(jobApi, format));
+        String format = config.getString("core-integration.belowname.format", "&7Lv.{level} {job}");
+        belownameApi.registerProvider(new CoreBelownameProvider(jobApi, statusApi, format));
     }
 
     private void registerChatPlaceholder(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi) {

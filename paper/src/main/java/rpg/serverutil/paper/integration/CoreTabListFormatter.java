@@ -14,7 +14,9 @@ import java.util.Optional;
  * Colors a player's nametag/tab-list name by their current OreliaCore job (config-driven
  * job id -&gt; {@link ChatColor} map) and appends a level suffix. Job id strings (e.g.
  * {@code "FENCER"}) come straight from {@link JobApi#getCurrentJob}, so this never needs to
- * know about {@code rpg.job.model.JobType} directly.
+ * know about {@code rpg.job.model.JobType} directly. The level suffix still shows even when
+ * the player has no job yet (job selection is optional/gated behind a guild in some setups) -
+ * only the color override is skipped in that case.
  */
 final class CoreTabListFormatter implements TabListNameFormatter {
 
@@ -42,13 +44,10 @@ final class CoreTabListFormatter implements TabListNameFormatter {
 
     @Override
     public Optional<TabListEntry> format(Player player) {
-        String job = jobApi.getCurrentJob(player.getUniqueId()).orElse(null);
-        if (job == null) {
-            return Optional.empty();
-        }
+        String job = jobApi != null ? jobApi.getCurrentJob(player.getUniqueId()).orElse(null) : null;
         int level = statusApi != null ? statusApi.getLevel(player.getUniqueId()).orElse(1) : 1;
         String suffix = suffixFormat.replace("{level}", String.valueOf(level));
-        ChatColor color = jobColors.get(job);
+        ChatColor color = job != null ? jobColors.get(job) : null;
         return Optional.of(new TabListEntry("", suffix, color));
     }
 }
