@@ -44,12 +44,13 @@ public final class AnnounceModule implements ServerUtilModule, Listener {
         if (!player.isOnline()) {
             return;
         }
+        var placeholders = plugin.getPlaceholderService();
         for (String line : config.getStringList("announce.lines")) {
-            player.sendMessage(ColorUtil.colorize(line));
+            player.sendMessage(ColorUtil.colorize(placeholders.resolve(line, player)));
         }
         if (config.getBoolean("announce.title.enabled", false)) {
-            String title = ColorUtil.colorize(config.getString("announce.title.title", ""));
-            String subtitle = ColorUtil.colorize(config.getString("announce.title.subtitle", ""));
+            String title = ColorUtil.colorize(placeholders.resolve(config.getString("announce.title.title", ""), player));
+            String subtitle = ColorUtil.colorize(placeholders.resolve(config.getString("announce.title.subtitle", ""), player));
             player.sendTitle(title, subtitle, 10, 60, 10);
         }
     }

@@ -1,19 +1,19 @@
 package rpg.serverutil.paper.integration;
 
 import org.bukkit.entity.Player;
-import rpg.api.JobApi;
 import rpg.serverutil.api.BelownameValueProvider;
+import rpg.serverutil.paper.placeholder.PlaceholderService;
 
 import java.util.Optional;
 
-/** Shows the player's current OreliaCore job display name below their nametag. */
+/** Shows a config-driven, placeholder-resolved value below the nametag (level + job by default). */
 final class CoreBelownameProvider implements BelownameValueProvider {
 
-    private final JobApi jobApi;
+    private final PlaceholderService placeholders;
     private final String format;
 
-    CoreBelownameProvider(JobApi jobApi, String format) {
-        this.jobApi = jobApi;
+    CoreBelownameProvider(PlaceholderService placeholders, String format) {
+        this.placeholders = placeholders;
         this.format = format;
     }
 
@@ -29,6 +29,6 @@ final class CoreBelownameProvider implements BelownameValueProvider {
 
     @Override
     public Optional<String> getValue(Player target) {
-        return jobApi.getCurrentJobDisplayName(target.getUniqueId()).map(job -> format.replace("{job}", job));
+        return Optional.of(placeholders.resolve(format, target));
     }
 }

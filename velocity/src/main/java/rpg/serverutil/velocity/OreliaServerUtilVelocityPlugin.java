@@ -49,8 +49,9 @@ public final class OreliaServerUtilVelocityPlugin {
         proxyServer.getEventManager().register(this, new PaperMessageListener(channel, proxyServer, config, logger));
         proxyServer.getEventManager().register(this, new ServerSwitchListener(channel, config));
 
-        logger.info("OreliaServerUtil(Velocity) initialized. channel={}, hub-server={}",
-                config.channel(), config.hubServerName());
+        logger.info("OreliaServerUtil(Velocity) initialized. channel={}, hub-server={}, server-switch-notify-enabled={}. "
+                + "Each backend Paper server also needs velocity.enabled: true and a matching \"channel\" to receive these.",
+                config.channel(), config.hubServerName(), config.serverSwitchNotifyEnabled());
     }
 
     public ProxyServer getProxyServer() {

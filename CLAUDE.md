@@ -83,8 +83,24 @@ only fully initialized once *its* `onEnable()` has actually run. `JoinMessageMod
 modules above it (`ScoreboardApi`/`TabListApi`/`BelownameApi`/`ChatApi`) plus OreliaCore's own
 `StatusApi`/`EconomyApi`/`JobApi`, all of which must already exist by the time it runs. Each
 provider registration independently null-guards the specific OreliaCore API it needs (job
-color/suffix on the tab-list Team, level on the tab-list value and chat placeholder, job name
-on belowname) - see `rpg.serverutil.paper.integration.Core*Provider`/`CoreTabListFormatter`.
+color on the tab-list Team - kept separate from placeholders since it needs the raw job id,
+not the display name) - see `rpg.serverutil.paper.integration.Core*Provider`/`CoreTabListFormatter`.
+
+### Placeholders (`rpg.serverutil.paper.placeholder.PlaceholderService`)
+
+Every config `format`/`suffix-format`/`placeholder-format`/`lines` key across this plugin
+(`Core*Provider`, `AnnounceModule`, `TabListModule`'s header/footer) is resolved through one
+shared `PlaceholderService` instance (`OreliaServerUtilPlugin.getPlaceholderService()`) instead
+of each hand-rolling its own `String#replace` chain. It resolves built-in tokens
+(`{online}`/`{tps}`/`{ping}`/`{world}`/`{player}`/`{server}`/`{date}`/`{time}`) unconditionally,
+OreliaCore tokens (`{level}`/`{job}`/`{money}`/`{health}`/`{max_health}`) via the same
+soft-dependency `ServicesManager` lookups `CoreIntegrationModule` uses (left as literal text if
+OreliaCore isn't installed), then PlaceholderAPI's `%...%` syntax last if that plugin is present
+- see `PlaceholderApiHook`, the only class allowed to reference `me.clip.placeholderapi`
+directly, isolated so a missing PlaceholderAPI jar never triggers `NoClassDefFoundError`
+elsewhere. When adding a new config-driven text field, resolve it through this service rather
+than adding another one-off `.replace(...)` chain. The full token list is documented in the
+cheat-sheet comment at the top of `config.yml`.
 
 ### Commands
 

@@ -1,22 +1,19 @@
 package rpg.serverutil.paper.integration;
 
 import org.bukkit.entity.Player;
-import rpg.api.JobApi;
-import rpg.api.StatusApi;
 import rpg.serverutil.api.ChatPlaceholderProvider;
+import rpg.serverutil.paper.placeholder.PlaceholderService;
 
 import java.util.Optional;
 
-/** Shows the player's OreliaCore level and job next to their name in chat. */
+/** Shows a config-driven, placeholder-resolved value next to the sender's name in chat (level + job by default). */
 final class CoreChatPlaceholderProvider implements ChatPlaceholderProvider {
 
-    private final JobApi jobApi;
-    private final StatusApi statusApi;
+    private final PlaceholderService placeholders;
     private final String format;
 
-    CoreChatPlaceholderProvider(JobApi jobApi, StatusApi statusApi, String format) {
-        this.jobApi = jobApi;
-        this.statusApi = statusApi;
+    CoreChatPlaceholderProvider(PlaceholderService placeholders, String format) {
+        this.placeholders = placeholders;
         this.format = format;
     }
 
@@ -32,8 +29,6 @@ final class CoreChatPlaceholderProvider implements ChatPlaceholderProvider {
 
     @Override
     public Optional<String> getPlaceholder(Player sender) {
-        int level = statusApi != null ? statusApi.getLevel(sender.getUniqueId()).orElse(1) : 1;
-        String job = jobApi != null ? jobApi.getCurrentJobDisplayName(sender.getUniqueId()).orElse("") : "";
-        return Optional.of(format.replace("{level}", String.valueOf(level)).replace("{job}", job));
+        return Optional.of(placeholders.resolve(format, sender));
     }
 }

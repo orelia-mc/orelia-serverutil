@@ -54,10 +54,17 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
         this.enabled = config.getBoolean("velocity.enabled", false);
         this.channel = config.getString("velocity.channel", ServerUtilConstants.CHANNEL);
         if (!enabled) {
+            // Silently doing nothing here made hub.mode: PROXY and server-switch-notify look
+            // "broken" with zero diagnostic trail in past reports - log it explicitly instead.
+            plugin.getLogger().info("velocity.enabled is false - /hub PROXY mode and "
+                    + "server-switch join/leave messages are disabled. Set velocity.enabled: "
+                    + "true (and make sure \"channel\" matches the Velocity side's config.yml) "
+                    + "to use them.");
             return;
         }
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, channel);
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, channel, this);
+        plugin.getLogger().info("Velocity bridge enabled on channel \"" + channel + "\".");
     }
 
     @Override

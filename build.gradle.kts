@@ -24,6 +24,8 @@ subprojects {
         // Resolves orelia-core straight from its GitHub repo (softdepend, StatusApi/EconomyApi
         // reference only), same convention as orelia-world/orelia-extra/orelia-debug.
         maven("https://jitpack.io")
+        // PlaceholderAPI (softdepend, paper module only - see PlaceholderApiHook).
+        maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     }
 
     tasks.withType<JavaCompile> {
