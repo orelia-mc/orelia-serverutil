@@ -15,6 +15,7 @@ import rpg.serverutil.paper.module.ServerUtilModule;
 import rpg.serverutil.paper.util.ColorUtil;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -35,6 +36,11 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
     private boolean enabled;
     private String channel;
     private final Map<UUID, PendingRequest> pending = new ConcurrentHashMap<>();
+    // Populated by incoming SERVER_SWITCH_(LEAVE_)NOTIFY, consumed by JoinMessageModule's
+    // delayed join/quit broadcast so it can tell a network switch apart from a fresh login/a
+    // true disconnect (see the plan's Phase 6 design notes).
+    private final Map<UUID, ServerSwitchNotify> pendingArrivals = new ConcurrentHashMap<>();
+    private final Map<UUID, ServerSwitchNotify> pendingDepartures = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -95,9 +101,20 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
         switch (type) {
             case HUB_TRANSFER_RESULT -> handleHubTransferResult(message);
             case SERVER_SWITCH_NOTIFY -> handleServerSwitchNotify(message);
+            case SERVER_SWITCH_LEAVE_NOTIFY -> handleServerSwitchLeaveNotify(message);
             default -> {
             }
         }
+    }
+
+    /** Consumed once by {@code JoinMessageModule}'s delayed join broadcast; empty if none arrived in time. */
+    public Optional<ServerSwitchNotify> consumeArrival(UUID playerId) {
+        return Optional.ofNullable(pendingArrivals.remove(playerId));
+    }
+
+    /** Consumed once by {@code JoinMessageModule}'s delayed quit broadcast; empty if none arrived in time. */
+    public Optional<ServerSwitchNotify> consumeDeparture(UUID playerId) {
+        return Optional.ofNullable(pendingDepartures.remove(playerId));
     }
 
     private void handleHubTransferResult(byte[] message) {
@@ -112,7 +129,13 @@ public final class VelocityBridgeModule implements ServerUtilModule, PluginMessa
 
     private void handleServerSwitchNotify(byte[] message) {
         ServerSwitchNotify notify = ProtocolCodec.decodeServerSwitchNotify(message);
+        pendingArrivals.put(notify.playerId(), notify);
         Bukkit.getScheduler().runTask(plugin, () -> showSwitchTitle(notify));
+    }
+
+    private void handleServerSwitchLeaveNotify(byte[] message) {
+        ServerSwitchNotify notify = ProtocolCodec.decodeServerSwitchLeaveNotify(message);
+        pendingDepartures.put(notify.playerId(), notify);
     }
 
     private void showSwitchTitle(ServerSwitchNotify notify) {

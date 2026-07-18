@@ -5,11 +5,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.Plugin;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
 import rpg.serverutil.paper.module.ServerUtilModule;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /** Shows operators a quick TPS/online-count summary on join, so issues surface immediately. */
 public final class HealthCheckModule implements ServerUtilModule, Listener {
+
+    private static final List<String> ORELIA_PLUGIN_NAMES =
+            List.of("OreliaCore", "OreliaWorld", "OreliaExtra", "OreliaDebug");
 
     private OreliaServerUtilPlugin plugin;
 
@@ -42,5 +49,23 @@ public final class HealthCheckModule implements ServerUtilModule, Listener {
         int online = Bukkit.getOnlinePlayers().size();
         plugin.getMessageManager().send(player, "healthcheck.summary",
                 "tps", String.format("%.1f", tps), "online", online);
+
+        if (config.getBoolean("core-integration.enabled", true)) {
+            plugin.getMessageManager().send(player, "healthcheck.orelia-plugins",
+                    "plugins", describeOreliaPlugins());
+        }
+    }
+
+    private String describeOreliaPlugins() {
+        return ORELIA_PLUGIN_NAMES.stream()
+                .map(this::describePlugin)
+                .collect(Collectors.joining("&7, "));
+    }
+
+    private String describePlugin(String name) {
+        Plugin found = Bukkit.getPluginManager().getPlugin(name);
+        return found != null
+                ? "&a" + name + " &7v" + found.getPluginMeta().getVersion()
+                : "&8" + name + " (未導入)";
     }
 }

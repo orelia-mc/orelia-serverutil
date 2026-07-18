@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `orelia-serverutil` is a gameplay-independent server-operations/UX plugin, separate from the
 Orelia RPG plugin suite (orelia-core/world/extra/debug). It provides hub transfer (same-server
-teleport or cross-server via Velocity), one-command world setup (GameRule profiles), a
-sidebar-scoreboard/tab-list API other plugins can plug into, and join/announce messaging.
+teleport or cross-server via Velocity), one-command world setup (GameRule profiles),
+sidebar-scoreboard/tab-list-name/tab-list-value/belowname/chat-placeholder APIs other plugins
+can plug into, and join/announce/server-switch messaging.
 
 Three Gradle modules:
 - **common** (`rpg.serverutil.common`) - platform-independent protocol/data classes shared by
@@ -65,9 +66,16 @@ disable order). `OreliaServerUtilPlugin.onEnable()` registers modules in this or
 
 ```
 SpawnModule -> WorldSetupModule -> VelocityBridgeModule -> HubModule ->
-ScoreboardModule -> TabListModule -> JoinMessageModule -> AnnounceModule ->
-HealthCheckModule -> CoreIntegrationModule (always last)
+ScoreboardModule -> TabListModule -> BelownameModule -> JoinMessageModule ->
+AnnounceModule -> ChatModule -> HealthCheckModule ->
+CoreIntegrationModule (always last)
 ```
+
+Note: `ServerUtilModuleManager.register()` populates its by-type lookup map for *every*
+module before `enableAll()` runs any `onEnable()`, so `plugin.getModuleManager().get(X.class)`
+always resolves regardless of registration order - but the returned module's own fields are
+only fully initialized once *its* `onEnable()` has actually run. `JoinMessageModule` relies on
+`VelocityBridgeModule` being registered (and therefore enabled) earlier in the list above.
 
 `HubModule` depends on `VelocityBridgeModule` being registered first (looks it up via
 `plugin.getModuleManager().get(VelocityBridgeModule.class)` for `hub.mode: PROXY`).
@@ -85,20 +93,40 @@ commands in `plugin.yml`: `/hub` (`HubCommand`, registered by `HubModule`) and `
 
 ### Public API (`rpg.serverutil.api`)
 
-`ScoreboardApi`/`ScoreboardLineProvider` and `TabListApi`/`TabListNameFormatter`/
-`TabListEntry` are published via Bukkit's `ServicesManager` (registered by
-`ScoreboardModule`/`TabListModule`). This is the intended integration surface for other
-plugins wanting to feed the sidebar/tab-list - see `CoreIntegrationModule` for a worked
-example. Both managers layer their objective/teams onto the *same* per-player
-`Scoreboard` instance via `rpg.serverutil.paper.util.BoardUtil.ensurePersonalBoard(Player)`
-rather than each calling `player.setScoreboard(...)` with a fresh board, which would wipe out
-the other feature's state. If you add a third scoreboard-based feature, use `BoardUtil` too.
+`ScoreboardApi`/`ScoreboardLineProvider`, `TabListApi`/`TabListNameFormatter`/`TabListEntry`/
+`TabListValueProvider`, `BelownameApi`/`BelownameValueProvider`, and `ChatApi`/
+`ChatPlaceholderProvider` are published via Bukkit's `ServicesManager` (registered by
+`ScoreboardModule`/`TabListModule`/`BelownameModule`/`ChatModule`). This is the intended
+integration surface for other plugins wanting to feed the sidebar/tab-list/belowname/chat -
+see `CoreIntegrationModule` for a worked example. `ScoreboardManager`/`TabListManager`/
+`BelownameManager` all layer their objective/teams onto the *same* per-player `Scoreboard`
+instance via `rpg.serverutil.paper.util.BoardUtil.ensurePersonalBoard(Player)` rather than
+each calling `player.setScoreboard(...)` with a fresh board, which would wipe out the other
+feature's state. If you add another scoreboard-based feature, use `BoardUtil` too.
 
 `TabListManager.tick()` is O(playerCount^2) by necessity - a player's name color in another
 player's tab list is driven by that *other* player's own local scoreboard team membership, so
 every online player's team has to be written into every online player's personal board each
 tick. Acceptable for the player counts this plugin targets; don't "optimize" this to only
 touch the viewer's own board, it will silently break cross-player name coloring.
+
+**Nametags and tab-list name decoration share one Team, intentionally.** Minecraft only lets
+a scoreboard entry (player name) belong to one `Team` at a time, and that Team's
+prefix/suffix/color drive *both* the above-head nametag and (via Bukkit's default tab-list
+display-name synthesis) the tab-list name simultaneously. `TabListEntry`'s `color` field
+therefore controls both surfaces together - there is deliberately no separate "Nametags API";
+see the plan's design notes (`wiggly-purring-fox.md` at the time this was written) for why a
+TAB-style split (Team for nametags, `Player#playerListName()` for tab-list name) was rejected:
+it would make tab-list names the same for every viewer, losing this plugin's existing
+per-viewer differentiation.
+
+The tab-list *value* (`TabListValueProvider`) and belowname (`BelownameValueProvider`) are
+unrelated mechanisms - separate `Objective`s in the `PLAYER_LIST`/`BELOW_NAME` display slots,
+using `io.papermc.paper.scoreboard.numbers.NumberFormat` (not `org.bukkit.scoreboard.*|` -
+easy to reach for the wrong package) to show arbitrary text instead of a plain number
+(Paper 1.20.3+; older clients silently see the raw score number instead since the format hint
+is ignored). Belowname's `title` is shared across every target (Minecraft only allows one
+title per objective); only the per-target value differs.
 
 ### Velocity <-> Paper bridge (`rpg.serverutil.common.protocol`, `*.bridge`)
 
@@ -113,8 +141,16 @@ binary framing, same convention as the sibling MultiAccount project) - three mes
     `PaperCommandBridge` (`VelocityBridgeModule.sendHubRequest`).
 - `HUB_TRANSFER_RESULT` (Velocity -> Paper): outcome, delivered back through the *same*
   `ServerConnection` the request came in on.
-- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper): best-effort only, purely cosmetic (title
-  display) - a dropped message here is never treated as an error.
+- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper, to the *destination*): best-effort only,
+  triggers a title display (`VelocityBridgeModule.showSwitchTitle`) and is cached in
+  `VelocityBridgeModule.pendingArrivals` for `JoinMessageModule`'s delayed join broadcast to
+  consume. A dropped message here is never treated as an error.
+- `SERVER_SWITCH_LEAVE_NOTIFY` (Velocity -> Paper, to the *source*): same payload shape as
+  `SERVER_SWITCH_NOTIFY` (different wire tag), cached in `pendingDepartures` for
+  `JoinMessageModule`'s delayed quit broadcast. Since the departing player is no longer
+  connected to the source server by the time this fires, Velocity relays it through *any
+  other* online player still on that server (`ServerSwitchListener.sendLeaveNotify`) - if
+  nobody remains there, nothing is sent (nobody would see the leave message anyway).
 
 Sending a plugin message requires an online `Player` as the carrier - there is no
 console-triggered path, same limitation as MultiAccount's bridge.

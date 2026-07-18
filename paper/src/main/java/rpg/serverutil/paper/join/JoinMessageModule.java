@@ -1,17 +1,30 @@
 package rpg.serverutil.paper.join;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import rpg.serverutil.common.protocol.ServerSwitchNotify;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
+import rpg.serverutil.paper.bridge.VelocityBridgeModule;
 import rpg.serverutil.paper.message.MessageManager;
 import rpg.serverutil.paper.module.ServerUtilModule;
 
-/** Customizes join/quit chat messages, distinguishing a player's very first join. */
+/**
+ * Customizes join/quit chat messages, distinguishing a player's very first join. When behind a
+ * Velocity proxy running OreliaServerUtil(Velocity), a network server switch instead gets the
+ * "{player} | {from} -> {to}" format: the vanilla message is suppressed and re-sent a few ticks
+ * later, once {@link VelocityBridgeModule}'s incoming SERVER_SWITCH_(LEAVE_)NOTIFY had a chance
+ * to arrive - falling back to the normal join/quit text if none did (fresh login / full
+ * disconnect from the proxy, or velocity.enabled is off, in which case this behaves exactly as
+ * before with zero delay).
+ */
 public final class JoinMessageModule implements ServerUtilModule, Listener {
 
     private OreliaServerUtilPlugin plugin;
+    private VelocityBridgeModule velocityBridge;
 
     @Override
     public String getName() {
@@ -21,6 +34,7 @@ public final class JoinMessageModule implements ServerUtilModule, Listener {
     @Override
     public void onEnable(OreliaServerUtilPlugin plugin) {
         this.plugin = plugin;
+        this.velocityBridge = plugin.getModuleManager().get(VelocityBridgeModule.class).orElse(null);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -30,13 +44,55 @@ public final class JoinMessageModule implements ServerUtilModule, Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        MessageManager messages = plugin.getMessageManager();
-        String key = event.getPlayer().hasPlayedBefore() ? "join.join-message" : "join.first-join-message";
-        event.setJoinMessage(messages.format(key, "player", event.getPlayer().getName()));
+        if (velocityBridge == null || !velocityBridge.isEnabled()) {
+            event.setJoinMessage(plainJoinMessage(event.getPlayer()));
+            return;
+        }
+        event.setJoinMessage(null);
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastJoin(player), waitTicks());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        event.setQuitMessage(plugin.getMessageManager().format("join.quit-message", "player", event.getPlayer().getName()));
+        if (velocityBridge == null || !velocityBridge.isEnabled()) {
+            event.setQuitMessage(plainQuitMessage(event.getPlayer()));
+            return;
+        }
+        event.setQuitMessage(null);
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastQuit(player), waitTicks());
+    }
+
+    private void broadcastJoin(Player player) {
+        ServerSwitchNotify notify = velocityBridge.consumeArrival(player.getUniqueId()).orElse(null);
+        String message = notify != null && notify.fromServer() != null
+                ? plugin.getMessageManager().format("join.server-switch-message",
+                        "player", player.getName(), "from", notify.fromServer(), "to", notify.toServer())
+                : plainJoinMessage(player);
+        Bukkit.broadcastMessage(message);
+    }
+
+    private void broadcastQuit(Player player) {
+        ServerSwitchNotify notify = velocityBridge.consumeDeparture(player.getUniqueId()).orElse(null);
+        String message = notify != null
+                ? plugin.getMessageManager().format("join.server-switch-leave-message",
+                        "player", player.getName(), "from", notify.fromServer(), "to", notify.toServer())
+                : plainQuitMessage(player);
+        Bukkit.broadcastMessage(message);
+    }
+
+    private String plainJoinMessage(Player player) {
+        MessageManager messages = plugin.getMessageManager();
+        String key = player.hasPlayedBefore() ? "join.join-message" : "join.first-join-message";
+        return messages.format(key, "player", player.getName());
+    }
+
+    private String plainQuitMessage(Player player) {
+        return plugin.getMessageManager().format("join.quit-message", "player", player.getName());
+    }
+
+    private long waitTicks() {
+        return plugin.getConfigManager().get("config.yml").get().getLong("join.server-switch-wait-ticks", 5L);
     }
 }

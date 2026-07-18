@@ -69,6 +69,17 @@ class ProtocolCodecTest {
     }
 
     @Test
+    void serverSwitchLeaveNotifyRoundTrips() {
+        ServerSwitchNotify original = new ServerSwitchNotify(UUID.randomUUID(), "survival", "hub");
+
+        byte[] encoded = ProtocolCodec.encodeServerSwitchLeaveNotify(original);
+
+        assertEquals(MessageType.SERVER_SWITCH_LEAVE_NOTIFY, ProtocolCodec.peekType(encoded));
+        ServerSwitchNotify decoded = ProtocolCodec.decodeServerSwitchLeaveNotify(encoded);
+        assertEquals(original, decoded);
+    }
+
+    @Test
     void decodingWithWrongTypeThrows() {
         byte[] encoded = ProtocolCodec.encodeHubTransferRequest(new HubTransferRequest(UUID.randomUUID()));
 

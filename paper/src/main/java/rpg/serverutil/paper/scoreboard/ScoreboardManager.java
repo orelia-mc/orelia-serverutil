@@ -3,6 +3,7 @@ package rpg.serverutil.paper.scoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -34,11 +35,13 @@ public final class ScoreboardManager implements ScoreboardApi {
     private static final int MAX_LINES = ChatColor.values().length;
 
     private final String title;
+    private final boolean hideNumbers;
     private final Map<String, ScoreboardLineProvider> providers = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> lastRenderedLines = new ConcurrentHashMap<>();
 
-    public ScoreboardManager(String title) {
+    public ScoreboardManager(String title, boolean hideNumbers) {
         this.title = title;
+        this.hideNumbers = hideNumbers;
     }
 
     @Override
@@ -91,7 +94,11 @@ public final class ScoreboardManager implements ScoreboardApi {
                 team.addEntry(entry);
             }
             team.setPrefix(ColorUtil.colorize(lines.get(i)));
-            objective.getScore(entry).setScore(score--);
+            var scoreEntry = objective.getScore(entry);
+            scoreEntry.setScore(score--);
+            if (hideNumbers) {
+                scoreEntry.numberFormat(NumberFormat.blank());
+            }
         }
     }
 

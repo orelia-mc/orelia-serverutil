@@ -22,8 +22,9 @@ public final class ScoreboardModule implements ServerUtilModule, Listener {
         var config = plugin.getConfigManager().get("config.yml").get();
         String title = config.getString("scoreboard.title", "&6Orelia");
         long intervalTicks = config.getLong("scoreboard.update-interval-ticks", 20L);
+        boolean hideNumbers = config.getBoolean("scoreboard.hide-numbers", false);
 
-        this.manager = new ScoreboardManager(title);
+        this.manager = new ScoreboardManager(title, hideNumbers);
         plugin.getServer().getServicesManager().register(ScoreboardApi.class, manager, plugin, ServicePriority.Normal);
         plugin.getServer().getScheduler().runTaskTimer(plugin, manager::tick, intervalTicks, intervalTicks);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);

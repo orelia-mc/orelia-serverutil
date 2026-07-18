@@ -34,8 +34,17 @@ public final class ProtocolCodec {
     }
 
     public static byte[] encodeServerSwitchNotify(ServerSwitchNotify notify) {
+        return encodeServerSwitchNotify(MessageType.SERVER_SWITCH_NOTIFY, notify);
+    }
+
+    /** Same payload shape as the arrival notify, sent to the *source* server instead. */
+    public static byte[] encodeServerSwitchLeaveNotify(ServerSwitchNotify notify) {
+        return encodeServerSwitchNotify(MessageType.SERVER_SWITCH_LEAVE_NOTIFY, notify);
+    }
+
+    private static byte[] encodeServerSwitchNotify(MessageType type, ServerSwitchNotify notify) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF(MessageType.SERVER_SWITCH_NOTIFY.name());
+        out.writeUTF(type.name());
         writeUuid(out, notify.playerId());
         out.writeBoolean(notify.fromServer() != null);
         if (notify.fromServer() != null) {
@@ -66,8 +75,16 @@ public final class ProtocolCodec {
     }
 
     public static ServerSwitchNotify decodeServerSwitchNotify(byte[] data) {
+        return decodeServerSwitchNotify(MessageType.SERVER_SWITCH_NOTIFY, data);
+    }
+
+    public static ServerSwitchNotify decodeServerSwitchLeaveNotify(byte[] data) {
+        return decodeServerSwitchNotify(MessageType.SERVER_SWITCH_LEAVE_NOTIFY, data);
+    }
+
+    private static ServerSwitchNotify decodeServerSwitchNotify(MessageType type, byte[] data) {
         ByteArrayDataInput in = ByteStreams.newDataInput(data);
-        requireType(in, MessageType.SERVER_SWITCH_NOTIFY);
+        requireType(in, type);
         UUID playerId = readUuid(in);
         boolean hasFromServer = in.readBoolean();
         String fromServer = hasFromServer ? in.readUTF() : null;
