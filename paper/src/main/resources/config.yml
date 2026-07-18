@@ -117,6 +117,16 @@ belowname:
 chat:
   enabled: true
   format: "{placeholder}{sender}&7: &f{message}"
+  # Hover tooltip shown when hovering over a player's name in chat. Each line is resolved
+  # through the same PlaceholderService as everything else (see the cheat sheet above) -
+  # add/remove lines freely to change what shows.
+  tooltip:
+    enabled: true
+    lines:
+      - "&f{player}"
+      - "&7{time}"
+      - "&7Lv.{level} &b{job}"
+      - "&7HP: &c{health}&7/&c{max_health}"
 
 # Welcome announcement shown a short delay after join (chat lines + optional title).
 announce:
