@@ -2,6 +2,12 @@
 # see orelia-serverutil-CONCEPT.md for the full feature roadmap and README.md for the
 # up-to-date command/config reference.
 #
+# config-version tracks this file's schema. Bump it whenever a new top-level section is
+# added - on next startup, ConfigManager appends the new section (with its comments) to any
+# existing config.yml that's missing it, without touching anything you've already customized.
+# Never bump this for a value-only change (e.g. tweaking a default), only for new/removed keys.
+config-version: 1
+#
 # ============================== PLACEHOLDER CHEAT SHEET ==============================
 # Every "format"/"suffix-format"/"placeholder-format" key below (and announce.lines/
 # announce.title) is resolved through rpg.serverutil.paper.placeholder.PlaceholderService,
