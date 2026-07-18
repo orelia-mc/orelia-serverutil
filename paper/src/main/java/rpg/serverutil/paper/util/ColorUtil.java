@@ -1,5 +1,7 @@
 package rpg.serverutil.paper.util;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 
 /**
@@ -16,5 +18,10 @@ public final class ColorUtil {
             return "";
         }
         return ChatColor.translateAlternateColorCodes('&', input);
+    }
+
+    /** Same {@code &}-code translation as {@link #colorize(String)}, as an Adventure {@link Component}. */
+    public static Component component(String input) {
+        return LegacyComponentSerializer.legacySection().deserialize(colorize(input));
     }
 }

@@ -40,11 +40,30 @@ world-setup:
 scoreboard:
   title: "&6Orelia"
   update-interval-ticks: 20
+  # Hides the red score numbers on the right side of the sidebar (Paper 1.20.3+ only;
+  # older clients still show the raw number since the format hint is ignored).
+  hide-numbers: false
 
 # Tab-list name prefix/suffix. Other plugins register formatters via
 # rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
 tablist:
   update-interval-ticks: 40
+
+# Text shown below every player's nametag (health, faction, ...). Other plugins register
+# values via rpg.serverutil.api.BelownameApi. Off by default - once enabled, "title" is shown
+# to everyone even without a registered provider.
+belowname:
+  enabled: false
+  title: "&cHealth"
+  update-interval-ticks: 20
+
+# Chat formatting. {placeholder} is resolved via rpg.serverutil.api.ChatApi (level/title/rank
+# from other plugins, empty string if nothing registered) - include any brackets/spacing you
+# want around it directly in the provider's own returned text, not here, so the format still
+# looks right when the placeholder is empty.
+chat:
+  enabled: true
+  format: "{placeholder}{sender}&7: &f{message}"
 
 # Welcome announcement shown a short delay after join (chat lines + optional title).
 announce:
@@ -69,6 +88,12 @@ server-switch-notify:
   enabled: true
   title: "&6Orelia"
   subtitle: "&f{server} へようこそ"
+
+join:
+  # How long (in ticks) JoinMessageModule waits for an incoming SERVER_SWITCH_(LEAVE_)NOTIFY
+  # before falling back to the normal join/quit message. Only relevant when velocity.enabled
+  # is true - ignored otherwise.
+  server-switch-wait-ticks: 5
 
 # Adds a sample sidebar line (level/balance) sourced from OreliaCore, if it happens to be
 # installed. Set to false to disable even when OreliaCore is present.

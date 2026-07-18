@@ -34,6 +34,9 @@ join:
   first-join-message: "&aようこそ、{player}さん！初めての参加ですね。"
   join-message: "&a{player} が参加しました。"
   quit-message: "&7{player} が退出しました。"
+  server-switch-message: "&a{player} &7| &f{from} &7-> &f{to}"
+  server-switch-leave-message: "&7{player} &7| &f{from} &7-> &f{to}"
 
 healthcheck:
   summary: "&7[HealthCheck] TPS: &f{tps} &7| Online: &f{online}"
+  orelia-plugins: "&7[HealthCheck] Orelia: &f{plugins}"

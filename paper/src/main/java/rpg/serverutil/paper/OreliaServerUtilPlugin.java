@@ -2,7 +2,9 @@ package rpg.serverutil.paper;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import rpg.serverutil.paper.announce.AnnounceModule;
+import rpg.serverutil.paper.belowname.BelownameModule;
 import rpg.serverutil.paper.bridge.VelocityBridgeModule;
+import rpg.serverutil.paper.chat.ChatModule;
 import rpg.serverutil.paper.command.SuAdminCommand;
 import rpg.serverutil.paper.config.ConfigManager;
 import rpg.serverutil.paper.healthcheck.HealthCheckModule;
@@ -50,8 +52,10 @@ public final class OreliaServerUtilPlugin extends JavaPlugin {
         moduleManager.register(new HubModule());
         moduleManager.register(new ScoreboardModule());
         moduleManager.register(new TabListModule());
+        moduleManager.register(new BelownameModule());
         moduleManager.register(new JoinMessageModule());
         moduleManager.register(new AnnounceModule());
+        moduleManager.register(new ChatModule());
         moduleManager.register(new HealthCheckModule());
         // Always last: reaches for ScoreboardApi (registered above) and OreliaCore's own
         // published APIs, both of which must already exist by the time this runs.
