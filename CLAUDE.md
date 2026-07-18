@@ -79,9 +79,12 @@ only fully initialized once *its* `onEnable()` has actually run. `JoinMessageMod
 
 `HubModule` depends on `VelocityBridgeModule` being registered first (looks it up via
 `plugin.getModuleManager().get(VelocityBridgeModule.class)` for `hub.mode: PROXY`).
-`CoreIntegrationModule` is always last - it reaches for `ScoreboardApi` (published by
-`ScoreboardModule`) plus OreliaCore's own `StatusApi`/`EconomyApi`, both of which must already
-exist by the time it runs.
+`CoreIntegrationModule` is always last - it reaches for every display API published by the
+modules above it (`ScoreboardApi`/`TabListApi`/`BelownameApi`/`ChatApi`) plus OreliaCore's own
+`StatusApi`/`EconomyApi`/`JobApi`, all of which must already exist by the time it runs. Each
+provider registration independently null-guards the specific OreliaCore API it needs (job
+color/suffix on the tab-list Team, level on the tab-list value and chat placeholder, job name
+on belowname) - see `rpg.serverutil.paper.integration.Core*Provider`/`CoreTabListFormatter`.
 
 ### Commands
 
