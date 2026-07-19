@@ -198,10 +198,14 @@ core-integration:
   tablist:
     enabled: true
     suffix-format: " &%7[Lv.{level}]"
+    # NOTE: these must stay plain legacy &-codes (&0-&9/&a-&f), NOT the &%-prefixed custom
+    # palette used everywhere else in this config - a job color feeds a scoreboard Team's
+    # color (org.bukkit.scoreboard.Team#setColor), which only accepts the 16 legacy
+    # org.bukkit.ChatColor values, not arbitrary hex. See CoreIntegrationModule#parseJobColors.
     job-colors:
-      FENCER: "&%b"
-      WARRIOR: "&%c"
-      ARCHER: "&%a"
+      FENCER: "&b"
+      WARRIOR: "&c"
+      ARCHER: "&a"
   # Level shown on the right side of the tab-list entry.
   tablist-value:
     enabled: true

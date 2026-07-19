@@ -56,7 +56,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         registerTabListName(plugin, config, jobApi, statusApi, placeholders);
         registerTabListValue(plugin, config, statusApi, placeholders);
         registerBelowname(plugin, config, jobApi, statusApi, placeholders);
-        registerChatPlaceholder(plugin, config, placeholders);
+        registerChatPlaceholder(plugin, config, jobApi, statusApi, placeholders);
     }
 
     @Override
@@ -129,8 +129,13 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         belownameApi.registerProvider(new CoreBelownameProvider(placeholders, format));
     }
 
-    private void registerChatPlaceholder(OreliaServerUtilPlugin plugin, YamlConfiguration config, PlaceholderService placeholders) {
-        if (!config.getBoolean("core-integration.chat.enabled", true)) {
+    private void registerChatPlaceholder(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,
+                                          PlaceholderService placeholders) {
+        // Default format is "[Lv.{level}] {job}" - both tokens need StatusApi/JobApi, same
+        // guard registerTabListName/registerBelowname already apply, so this doesn't sit in
+        // every chat message as literal "[Lv.{level}] {job}" text on a partial OreliaCore
+        // install (e.g. only EconomyApi present).
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.chat.enabled", true)) {
             return;
         }
         ChatApi chatApi = plugin.getServer().getServicesManager().load(ChatApi.class);
@@ -141,7 +146,13 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         chatApi.registerProvider(new CoreChatPlaceholderProvider(placeholders, format));
     }
 
-    /** Parses {@code job-colors} entries written in the same {@code &}-code style as every other config color in this plugin (e.g. {@code "&%b"}). */
+    /**
+     * Parses {@code job-colors} entries. Deliberately plain legacy 2-char {@code &}-codes
+     * (e.g. {@code "&b"}), NOT this plugin's {@code &%}-prefixed custom hex palette used
+     * everywhere else - a job color ends up as a scoreboard {@code Team}'s color
+     * ({@code TabListManager#tick}), and {@code org.bukkit.scoreboard.Team#setColor} only
+     * accepts the 16 legacy {@link ChatColor} values, never arbitrary hex.
+     */
     private Map<String, ChatColor> parseJobColors(ConfigurationSection section) {
         Map<String, ChatColor> colors = new HashMap<>();
         if (section == null) {
@@ -149,13 +160,13 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         }
         for (String jobId : section.getKeys(false)) {
             String raw = section.getString(jobId, "").trim();
-            if (raw.length() != 2 || raw.charAt(0) != '&') {
+            if (raw.length() != 2 || raw.charAt(0) != '&' || ChatColor.getByChar(raw.charAt(1)) == null) {
+                plugin.getLogger().warning("core-integration.tablist.job-colors." + jobId + " (\"" + raw + "\") isn't a "
+                        + "legacy &-color code (e.g. \"&b\") - job colors can't use the &% custom palette "
+                        + "since scoreboard Team colors don't support hex. Skipping this entry.");
                 continue;
             }
-            ChatColor color = ChatColor.getByChar(raw.charAt(1));
-            if (color != null) {
-                colors.put(jobId, color);
-            }
+            colors.put(jobId, ChatColor.getByChar(raw.charAt(1)));
         }
         return colors;
     }
