@@ -10,6 +10,3 @@ hub:
   server-name: "hub"
   fallback-message: "ハブサーバーが見つかりませんでした。"
   request-timeout-seconds: 5
-
-server-switch-notify:
-  enabled: true

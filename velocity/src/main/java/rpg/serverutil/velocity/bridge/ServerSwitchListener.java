@@ -8,32 +8,32 @@ import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import rpg.serverutil.common.protocol.ProtocolCodec;
 import rpg.serverutil.common.protocol.ServerSwitchNotify;
-import rpg.serverutil.velocity.config.VelocityConfig;
 
 import java.util.UUID;
 
 /**
  * Best-effort notification whenever a player switches backend servers: the destination server
- * gets an arrival notify (title + join-format chat message), and - if anyone else is still
- * connected to it - the source server gets a departure notify (leave-format chat message).
- * Purely cosmetic - a dropped message here (e.g. a server hasn't registered the channel yet,
- * or nobody remains on the source server to relay it) is not treated as an error.
+ * gets an arrival notify (join-format chat message), and - if anyone else is still connected to
+ * it - the source server gets a departure notify (leave-format chat message). Always sent
+ * whenever the underlying channel is available - there used to be a
+ * {@code server-switch-notify.enabled} flag here, but it was gating this unconditionally (not
+ * just the title popup Paper used to show on arrival), which silently broke the join/leave
+ * chat messages for anyone who turned the flag off expecting it to only affect the title. The
+ * title feature was removed instead of fixing that ambiguity - see Paper's
+ * {@code VelocityBridgeModule} history. A dropped message here (e.g. a server hasn't registered
+ * the channel yet, or nobody remains on the source server to relay it) is not treated as an
+ * error.
  */
 public final class ServerSwitchListener {
 
     private final ChannelIdentifier channel;
-    private final VelocityConfig config;
 
-    public ServerSwitchListener(ChannelIdentifier channel, VelocityConfig config) {
+    public ServerSwitchListener(ChannelIdentifier channel) {
         this.channel = channel;
-        this.config = config;
     }
 
     @Subscribe
     public void onServerConnected(ServerConnectedEvent event) {
-        if (!config.serverSwitchNotifyEnabled()) {
-            return;
-        }
         UUID playerId = event.getPlayer().getUniqueId();
         String fromServer = event.getPreviousServer().map(server -> server.getServerInfo().getName()).orElse(null);
         String toServer = event.getServer().getServerInfo().getName();

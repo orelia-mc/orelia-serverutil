@@ -38,15 +38,15 @@ config-version: 1
 #   %luckperms_prefix% for a rank tag.
 # =======================================================================================
 
-# This server's own display name, used by the {server} placeholder above and by
-# server-switch-notify's {server} token. Leave blank to just omit it wherever it's used.
+# This server's own display name, used by the {server} placeholder above. Leave blank to just
+# omit it wherever it's used.
 server:
   name: ""
 
 # Enable this only when this server sits behind a Velocity proxy running
 # OreliaServerUtil(Velocity). "channel" must match the Velocity side's config.yml exactly.
-# Required for hub.mode: PROXY and for showing title/subtitle on incoming
-# server-switch-notify (see below).
+# Required for hub.mode: PROXY and for the server-switch join/leave chat messages below
+# (join.server-switch-wait-ticks / messages.yml's join.server-switch-(leave-)message).
 velocity:
   enabled: false
   channel: "orelia:serverutil"
@@ -153,16 +153,6 @@ announce:
 # Shows a quick TPS/online-count summary to operators on join.
 admin-healthcheck:
   enabled: true
-
-# Title/subtitle shown when this server receives a SERVER_SWITCH_NOTIFY from the Velocity
-# proxy (a player just landed here from another backend). Requires velocity.enabled: true.
-# Note: {server} here is a special case, NOT the PlaceholderService token from the cheat
-# sheet above - it's always the live destination server name Velocity itself reported for
-# this specific switch, regardless of what "server.name" is set to.
-server-switch-notify:
-  enabled: true
-  title: "&6Orelia"
-  subtitle: "&7Server Switched to {server}."
 
 join:
   # Upper bound (in ticks) JoinMessageModule waits for an incoming SERVER_SWITCH_(LEAVE_)NOTIFY

@@ -17,7 +17,8 @@ Three Gradle modules:
   is a **soft dependency only** (`plugin.yml` `softdepend`, not `depend`) - this plugin must
   start and function fully without it installed.
 - **velocity** (`rpg.serverutil.velocity`) - the Velocity proxy plugin. Only needed for
-  `hub.mode: PROXY` and server-switch-notify titles; the paper module works fine without it.
+  `hub.mode: PROXY` and the server-switch join/leave chat messages; the paper module works
+  fine without it.
 
 ## Build
 
@@ -102,9 +103,12 @@ recreating the manager itself (which would silently drop every provider some oth
 already registered into it). `CoreIntegrationModule.onReload()` takes the simpler path of
 just calling `onEnable(plugin)` again - safe only because every `Core*Provider`'s `getId()` is
 a stable constant, so re-registering just replaces that one map entry in the target manager
-without touching providers registered by anyone else. When adding a module that caches a
-config value in a field, follow one of these two patterns rather than leaving `onReload()` as
-the interface's no-op default.
+without touching providers registered by anyone else. `VelocityBridgeModule.onReload()` is a
+third variant - it unregisters its old plugin messaging channel (if it had one) before
+re-reading `velocity.enabled`/`velocity.channel` and re-registering, so flipping
+`velocity.enabled` or changing `channel` takes effect without a restart. When adding a module
+that caches a config value in a field, follow one of these patterns rather than leaving
+`onReload()` as the interface's no-op default.
 
 ### Placeholders (`rpg.serverutil.paper.placeholder.PlaceholderService`)
 
@@ -186,10 +190,15 @@ binary framing, same convention as the sibling MultiAccount project) - three mes
     `PaperCommandBridge` (`VelocityBridgeModule.sendHubRequest`).
 - `HUB_TRANSFER_RESULT` (Velocity -> Paper): outcome, delivered back through the *same*
   `ServerConnection` the request came in on.
-- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper, to the *destination*): best-effort only, triggers
-  a title display (`VelocityBridgeModule.showSwitchTitle`) and feeds `JoinMessageModule`'s join
-  broadcast via `VelocityBridgeModule.awaitArrival`. A dropped message here is never treated as
-  an error.
+- `SERVER_SWITCH_NOTIFY` (Velocity -> Paper, to the *destination*): best-effort only, feeds
+  `JoinMessageModule`'s join broadcast via `VelocityBridgeModule.awaitArrival`. A dropped
+  message here is never treated as an error. Sent unconditionally from
+  `ServerSwitchListener.onServerConnected` - there used to be a `server-switch-notify.enabled`
+  flag gating this send (originally meant to also gate a title popup on arrival), but that
+  silently broke the join/leave chat messages for anyone who disabled it expecting it to only
+  affect the title. The title feature was removed rather than re-adding a separate flag for
+  it - if a similar "show something extra on arrival" feature gets added later, gate its own
+  *display*, not the underlying notify send other features (like this one) depend on.
 - `SERVER_SWITCH_LEAVE_NOTIFY` (Velocity -> Paper, to the *source*): same payload shape as
   `SERVER_SWITCH_NOTIFY` (different wire tag), feeds `JoinMessageModule`'s quit broadcast via
   `VelocityBridgeModule.awaitDeparture`. Since the departing player is no longer connected to
