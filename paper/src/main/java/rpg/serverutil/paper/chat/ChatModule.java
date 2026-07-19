@@ -54,7 +54,7 @@ public final class ChatModule implements ServerUtilModule, Listener {
     @EventHandler
     public void onChat(AsyncChatEvent event) {
         YamlConfiguration config = plugin.getConfigManager().get("config.yml").get();
-        String format = config.getString("chat.format", "{placeholder}{sender}&7: &f{message}");
+        String format = config.getString("chat.format", "{placeholder}{sender}&%7: &%f{message}");
         String placeholderText = manager.resolve(event.getPlayer()).orElse("");
         Component placeholder = ColorUtil.component(placeholderText);
         Component tooltip = buildTooltip(config, event.getPlayer());
