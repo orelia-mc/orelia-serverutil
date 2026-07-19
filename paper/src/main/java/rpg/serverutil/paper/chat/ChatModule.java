@@ -4,6 +4,7 @@ import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -57,11 +58,30 @@ public final class ChatModule implements ServerUtilModule, Listener {
         String placeholderText = manager.resolve(event.getPlayer()).orElse("");
         Component placeholder = ColorUtil.component(placeholderText);
         Component tooltip = buildTooltip(config, event.getPlayer());
+        Component message = resolveMessage(config, event.getPlayer(), event.message());
 
-        event.renderer(ChatRenderer.viewerUnaware((source, sourceDisplayName, message) -> {
+        event.renderer(ChatRenderer.viewerUnaware((source, sourceDisplayName, ignoredMessage) -> {
             Component sender = tooltip != null ? sourceDisplayName.hoverEvent(HoverEvent.showText(tooltip)) : sourceDisplayName;
             return render(format, sender, placeholder, message);
         }));
+    }
+
+    /**
+     * Lets a player use {@code &}-color codes (legacy, {@code &#RRGGBB} hex, and OreliaCore's
+     * custom {@code &%<char>} codes - see {@link ColorUtil}) directly in their own chat
+     * messages, gated by {@code chat.color-codes.permission} (op-only by default, see
+     * plugin.yml). Everyone else's message passes through unchanged - typed {@code &} codes
+     * just show up as literal text, same as vanilla chat.
+     */
+    private Component resolveMessage(YamlConfiguration config, Player sender, Component original) {
+        if (!config.getBoolean("chat.color-codes.enabled", true)) {
+            return original;
+        }
+        String permission = config.getString("chat.color-codes.permission", "orelia.serverutil.chat.color");
+        if (!sender.hasPermission(permission)) {
+            return original;
+        }
+        return ColorUtil.component(PlainTextComponentSerializer.plainText().serialize(original));
     }
 
     /** Builds the (message-send-time) hover tooltip Component shown when hovering over the sender's name, or {@code null} if disabled. */
