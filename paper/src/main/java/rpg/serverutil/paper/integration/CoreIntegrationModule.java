@@ -15,6 +15,7 @@ import rpg.serverutil.paper.module.ServerUtilModule;
 import rpg.serverutil.paper.placeholder.PlaceholderService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,7 +52,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         }
 
         PlaceholderService placeholders = plugin.getPlaceholderService();
-        registerScoreboardLine(plugin, config, statusApi, economyApi);
+        registerScoreboardLine(plugin, config, placeholders);
         registerTabListName(plugin, config, jobApi, statusApi, placeholders);
         registerTabListValue(plugin, config, statusApi, placeholders);
         registerBelowname(plugin, config, jobApi, statusApi, placeholders);
@@ -73,11 +74,19 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         onEnable(plugin);
     }
 
-    private void registerScoreboardLine(OreliaServerUtilPlugin plugin, YamlConfiguration config, StatusApi statusApi, EconomyApi economyApi) {
-        ScoreboardApi scoreboardApi = plugin.getServer().getServicesManager().load(ScoreboardApi.class);
-        if (scoreboardApi != null) {
-            scoreboardApi.registerProvider(new CoreStatusLineProvider(statusApi, economyApi));
+    private void registerScoreboardLine(OreliaServerUtilPlugin plugin, YamlConfiguration config, PlaceholderService placeholders) {
+        if (!config.getBoolean("core-integration.scoreboard.enabled", true)) {
+            return;
         }
+        ScoreboardApi scoreboardApi = plugin.getServer().getServicesManager().load(ScoreboardApi.class);
+        if (scoreboardApi == null) {
+            return;
+        }
+        List<String> lines = config.getStringList("core-integration.scoreboard.lines");
+        if (lines.isEmpty()) {
+            return;
+        }
+        scoreboardApi.registerProvider(new CoreStatusLineProvider(placeholders, lines));
     }
 
     private void registerTabListName(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,

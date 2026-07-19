@@ -124,7 +124,14 @@ OreliaCore isn't installed), then PlaceholderAPI's `%...%` syntax last if that p
 - see `PlaceholderApiHook`, the only class allowed to reference `me.clip.placeholderapi`
 directly, isolated so a missing PlaceholderAPI jar never triggers `NoClassDefFoundError`
 elsewhere. When adding a new config-driven text field, resolve it through this service rather
-than adding another one-off `.replace(...)` chain. The full token list is documented in the
+than adding another one-off `.replace(...)` chain. `CoreStatusLineProvider` (the sidebar's
+level/money line) is a `ScoreboardLineProvider`, not a `format` string, so it doesn't fit that
+pattern directly - it takes `core-integration.scoreboard.lines` as a `List<String>` and
+resolves each line the same way. `ChatModule`'s `chat.color-codes` is a separate mechanism,
+not placeholder-related: gated by the `orelia.serverutil.chat.color` permission (default op,
+see plugin.yml), it lets the *sender* use `&`-color codes in their own typed message, resolved
+via `ColorUtil.component` on the plain-text-serialized message rather than through
+`PlaceholderService`. The full token list is documented in the
 cheat-sheet comment at the top of `config.yml`.
 
 ### Commands
