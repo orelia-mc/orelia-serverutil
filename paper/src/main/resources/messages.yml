@@ -2,41 +2,41 @@
 # MessageManager, keyed by the dotted paths below - do not hardcode ChatColor + literal
 # strings in command/listener code, add a key here instead.
 
-prefix: "&8[&6ServerUtil&8] &r"
+prefix: "&%8[&%6ServerUtil&%8] &r"
 
 command:
-  player-only: "&cプレイヤーのみ実行できます。"
+  player-only: "&%cプレイヤーのみ実行できます。"
 
 usage:
-  root: "&e使い方: /suadmin <reload|setspawn|worldsetup <world> [profile]> ..."
-  worldsetup: "&e使い方: /suadmin worldsetup <world> [profile]"
+  root: "&%e使い方: /suadmin &%7<&%ereload&%7|&%esetspawn&%7|&%eworldsetup &%7<&%eworld&%7>&%e [profile]&%7>&%e ..."
+  worldsetup: "&%e使い方: /suadmin worldsetup &%7<&%eworld&%7>&%e [profile]"
 
 admin:
-  reloaded: "&a設定を再読み込みしました。"
+  reloaded: "&%a設定を再読み込みしました。"
 
 spawn:
-  set: "&aワールド「{world}」のスポーン地点をここに設定しました。"
+  set: "&%aワールド「{world}」のスポーン地点をここに設定しました。"
 
 worldsetup:
-  world-not-found: "&c指定したワールドが見つかりません: {world}"
-  profile-not-found: "&c指定したプロファイルが見つかりません: {profile}"
-  applied: "&aワールド「{world}」にプロファイル「{profile}」を適用しました。"
-  applied-with-warnings: "&eワールド「{world}」にプロファイル「{profile}」を適用しました（未対応キー: {keys}）。"
+  world-not-found: "&%c指定したワールドが見つかりません: {world}"
+  profile-not-found: "&%c指定したプロファイルが見つかりません: {profile}"
+  applied: "&%aワールド「{world}」にプロファイル「{profile}」を適用しました。"
+  applied-with-warnings: "&%eワールド「{world}」にプロファイル「{profile}」を適用しました（未対応キー: {keys}）。"
 
 hub:
-  not-configured: "&cハブの座標が設定されていません（config.yml の hub.teleport を確認してください）。"
-  world-not-found: "&cハブのワールドが見つかりません: {world}"
-  teleported: "&aハブに移動しました。"
-  proxy-not-available: "&cサーバー間転送は現在利用できません。"
-  proxy-failed: "&cハブへの転送に失敗しました。"
+  not-configured: "&%cハブの座標が設定されていません（config.yml の hub.teleport を確認してください）。"
+  world-not-found: "&%cハブのワールドが見つかりません: {world}"
+  teleported: "&%aハブに移動しました。"
+  proxy-not-available: "&%cサーバー間転送は現在利用できません。"
+  proxy-failed: "&%cハブへの転送に失敗しました。"
 
 join:
-  first-join-message: "&aようこそ、{player}さん！初めての参加ですね。"
-  join-message: "&a{player} が参加しました。"
-  quit-message: "&7{player} が退出しました。"
-  server-switch-message: "&a{player} &7| &f{from} &7-> &f{to}"
-  server-switch-leave-message: "&7{player} &7| &f{from} &7-> &f{to}"
+  first-join-message: "&%aようこそ、{player}さん！初めての参加ですね。"
+  join-message: "&%a{player} が参加しました。"
+  quit-message: "&%7{player} が退出しました。"
+  server-switch-message: "&%a{player} &%7| &%f{from} &%7-> &%f{to}"
+  server-switch-leave-message: "&%7{player} &%7| &%f{from} &%7-> &%f{to}"
 
 healthcheck:
-  summary: "&7[HealthCheck] TPS: &f{tps} &7| Online: &f{online}"
-  orelia-plugins: "&7[HealthCheck] Orelia: &f{plugins}"
+  summary: "&%7[HealthCheck] TPS: &%f{tps} &%7| Online: &%f{online}"
+  orelia-plugins: "&%7[HealthCheck] Orelia: &%f{plugins}"

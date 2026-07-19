@@ -41,20 +41,20 @@ config-version: 1
 # This server's own display name, used by the {server} placeholder above. Leave blank to just
 # omit it wherever it's used.
 server:
-  name: ""
+  name: "Orelia"
 
 # Enable this only when this server sits behind a Velocity proxy running
 # OreliaServerUtil(Velocity). "channel" must match the Velocity side's config.yml exactly.
 # Required for hub.mode: PROXY and for the server-switch join/leave chat messages below
 # (join.server-switch-wait-ticks / messages.yml's join.server-switch-(leave-)message).
 velocity:
-  enabled: false
+  enabled: true
   channel: "orelia:serverutil"
 
 # /hub behavior. TELEPORT works standalone; PROXY requires OreliaServerUtil(Velocity) to be
 # running behind a Velocity proxy (see hub.mode reference in README.md).
 hub:
-  mode: TELEPORT   # TELEPORT | PROXY
+  mode: PROXY   # TELEPORT | PROXY
   teleport:
     world: "world"
     x: 0.5
@@ -84,7 +84,7 @@ world-setup:
 # see the cheat sheet above), merged in alongside anything other plugins register. Leave
 # "lines" empty to show only what other plugins provide.
 scoreboard:
-  title: "&6Orelia"
+  title: "  &%6Orelia  "
   update-interval-ticks: 20
   # Hides the red score numbers on the right side of the sidebar (Paper 1.20.3+ only;
   # older clients still show the raw number since the format hint is ignored).
@@ -93,8 +93,8 @@ scoreboard:
   # numbers render nearer the top. OreliaCore's own level/money line (if installed) uses 100.
   lines-priority: 0
   lines:
-    - "&7Online: &f{online}&7/&f{max_online}"
-    - "&7TPS: &f{tps}"
+    - " &%7Online: &%f{online}&%7/&%f{max_online} "
+    - " &%7TPS: &%f{tps} "
 
 # Tab-list name prefix/suffix. Other plugins register formatters via
 # rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
@@ -103,12 +103,12 @@ tablist:
   # Text shown above/below the player list. Each list entry is one line (placeholders
   # resolved per-viewer, see the cheat sheet above). Off by default.
   header-footer:
-    enabled: false
+    enabled: true
     header:
-      - "&6&l{server}"
-      - "&7Online: &f{online}&7/&f{max_online}"
+      - "&%6&l{server}"
+      - "&%7Online: &%f{online}&%7/&%f{max_online}"
     footer:
-      - "&7TPS: &f{tps}"
+      - "&%7TPS: &%f{tps}"
 
 # Text shown below every player's nametag. Two separate pieces, because Minecraft only
 # allows ONE shared title per BELOW_NAME objective (it can't vary per target the way the
@@ -125,7 +125,7 @@ tablist:
 #     against). There is no separate "enabled" flag for this whole feature - it shows itself
 #     automatically the moment any provider produces a value, and hides again once none do.
 belowname:
-  title: "&dSuffix"
+  title: "&%dSuffix"
   update-interval-ticks: 20
 
 # Chat formatting. {placeholder} is resolved via rpg.serverutil.api.ChatApi (level/title/rank
@@ -134,17 +134,17 @@ belowname:
 # looks right when the placeholder is empty.
 chat:
   enabled: true
-  format: "{placeholder}{sender}&7: &f{message}"
+  format: "{placeholder}{sender}&%7: &%f{message}"
   # Hover tooltip shown when hovering over a player's name in chat. Each line is resolved
   # through the same PlaceholderService as everything else (see the cheat sheet above) -
   # add/remove lines freely to change what shows.
   tooltip:
     enabled: true
     lines:
-      - "&f{player}"
-      - "&7{time}"
-      - "&7Lv.{level} &b{job}"
-      - "&7HP: &c{health}&7/&c{max_health}"
+      - "&%f{player}"
+      - "&%7{time}"
+      - "&%7Lv.{level} &%b{job}"
+      - "&%a{ping}ms"
   # Lets a player use &-color codes (legacy, &#RRGGBB hex, and OreliaCore's custom &%<char>
   # codes - see ColorUtil) directly in their own chat messages. Gated by the
   # "orelia.serverutil.chat.color" permission (see plugin.yml) - op-only by default, grant it
@@ -159,13 +159,13 @@ announce:
   enabled: true
   delay-ticks: 20
   lines:
-    - "&6==============================="
-    - "&fOreliaサーバーへようこそ！"
-    - "&6==============================="
+    - "&%3==============================="
+    - "&%b Welcome to Orelia Debug Server!"
+    - "&%3==============================="
   title:
     enabled: true
-    title: "&6Orelia Server"
-    subtitle: "&eWelcome!"
+    title: "&%bOrelia Debug Server"
+    subtitle: "&%3Welcome!"
 
 # Shows a quick TPS/online-count summary to operators on join.
 admin-healthcheck:
@@ -190,29 +190,29 @@ core-integration:
   scoreboard:
     enabled: true
     lines:
-      - "&fLv. &e{level}"
-      - "&fG: &6{money}"
+      - "&%fLv. &%e{level}"
+      - "&%fG: &%6{money}"
   # Tab-list/nametag color (by job id, "&"-code style) + level suffix. Job ids are whatever
   # OreliaCore's JobApi returns (e.g. FENCER/WARRIOR/ARCHER) - add/remove keys to match your
   # jobs.yml, unmapped jobs just get no color override.
   tablist:
     enabled: true
-    suffix-format: " &7[Lv.{level}]"
+    suffix-format: " &%7[Lv.{level}]"
     job-colors:
-      FENCER: "&b"
-      WARRIOR: "&c"
-      ARCHER: "&a"
+      FENCER: "&%b"
+      WARRIOR: "&%c"
+      ARCHER: "&%a"
   # Level shown on the right side of the tab-list entry.
   tablist-value:
     enabled: true
-    format: "&a{ping}ms"
+    format: "&%a{ping}ms"
   # Shown below the nametag, resolved per-TARGET (unlike belowname.title above, this genuinely
   # differs per player) - add {health}/{max_health} here if you want each player's HP to show
-  # under their own nametag, e.g. "&7Lv.{level} {job} &c{health}&7/&c{max_health}".
+  # under their own nametag, e.g. "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}".
   belowname:
     enabled: true
-    format: "&7Lv.{level} {job}"
+    format: "&%7Lv.{level} {job}"
   # Level + job shown next to the sender's name in chat.
   chat:
     enabled: true
-    placeholder-format: "&7[Lv.{level}] &b{job}&r "
+    placeholder-format: "&%7[Lv.{level}] &%b{job}&r "

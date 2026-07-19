@@ -99,7 +99,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
             return;
         }
         Map<String, ChatColor> jobColors = parseJobColors(config.getConfigurationSection("core-integration.tablist.job-colors"));
-        String suffixFormat = config.getString("core-integration.tablist.suffix-format", " &7[Lv.{level}]");
+        String suffixFormat = config.getString("core-integration.tablist.suffix-format", " &%7[Lv.{level}]");
         tabListApi.registerFormatter(new CoreTabListFormatter(jobApi, placeholders, jobColors, suffixFormat));
     }
 
@@ -112,7 +112,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         if (tabListApi == null) {
             return;
         }
-        String valueFormat = config.getString("core-integration.tablist-value.format", "&aLv.{level}");
+        String valueFormat = config.getString("core-integration.tablist-value.format", "&%aLv.{level}");
         tabListApi.registerValueProvider(new CoreTabListValueProvider(placeholders, valueFormat));
     }
 
@@ -125,7 +125,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         if (belownameApi == null) {
             return;
         }
-        String format = config.getString("core-integration.belowname.format", "&7Lv.{level} {job}");
+        String format = config.getString("core-integration.belowname.format", "&%7Lv.{level} {job}");
         belownameApi.registerProvider(new CoreBelownameProvider(placeholders, format));
     }
 
@@ -137,11 +137,11 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         if (chatApi == null) {
             return;
         }
-        String format = config.getString("core-integration.chat.placeholder-format", "&7[Lv.{level}] &b{job}&r ");
+        String format = config.getString("core-integration.chat.placeholder-format", "&%7[Lv.{level}] &%b{job}&r ");
         chatApi.registerProvider(new CoreChatPlaceholderProvider(placeholders, format));
     }
 
-    /** Parses {@code job-colors} entries written in the same {@code &}-code style as every other config color in this plugin (e.g. {@code "&b"}). */
+    /** Parses {@code job-colors} entries written in the same {@code &}-code style as every other config color in this plugin (e.g. {@code "&%b"}). */
     private Map<String, ChatColor> parseJobColors(ConfigurationSection section) {
         Map<String, ChatColor> colors = new HashMap<>();
         if (section == null) {

@@ -24,7 +24,7 @@ public final class ScoreboardModule implements ServerUtilModule, Listener {
     public void onEnable(OreliaServerUtilPlugin plugin) {
         this.plugin = plugin;
         var config = plugin.getConfigManager().get("config.yml").get();
-        String title = config.getString("scoreboard.title", "&6Orelia");
+        String title = config.getString("scoreboard.title", "&%6Orelia");
         long intervalTicks = config.getLong("scoreboard.update-interval-ticks", 20L);
         boolean hideNumbers = config.getBoolean("scoreboard.hide-numbers", false);
 
@@ -43,7 +43,7 @@ public final class ScoreboardModule implements ServerUtilModule, Listener {
     public void onReload() {
         var config = plugin.getConfigManager().get("config.yml").get();
         manager.updateSettings(
-                config.getString("scoreboard.title", "&6Orelia"),
+                config.getString("scoreboard.title", "&%6Orelia"),
                 config.getBoolean("scoreboard.hide-numbers", false));
 
         long intervalTicks = config.getLong("scoreboard.update-interval-ticks", 20L);

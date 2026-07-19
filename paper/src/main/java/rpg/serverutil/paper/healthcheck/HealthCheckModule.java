@@ -59,13 +59,13 @@ public final class HealthCheckModule implements ServerUtilModule, Listener {
     private String describeOreliaPlugins() {
         return ORELIA_PLUGIN_NAMES.stream()
                 .map(this::describePlugin)
-                .collect(Collectors.joining("&7, "));
+                .collect(Collectors.joining("&%7, "));
     }
 
     private String describePlugin(String name) {
         Plugin found = Bukkit.getPluginManager().getPlugin(name);
         return found != null
-                ? "&a" + name + " &7v" + found.getPluginMeta().getVersion()
-                : "&8" + name + " (未導入)";
+                ? "&%a" + name + " &%7v" + found.getPluginMeta().getVersion()
+                : "&%8" + name + " (未導入)";
     }
 }
