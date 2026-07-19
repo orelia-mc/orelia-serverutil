@@ -47,11 +47,11 @@ public final class OreliaServerUtilVelocityPlugin {
         MinecraftChannelIdentifier channel = MinecraftChannelIdentifier.from(config.channel());
         proxyServer.getChannelRegistrar().register(channel);
         proxyServer.getEventManager().register(this, new PaperMessageListener(channel, proxyServer, config, logger));
-        proxyServer.getEventManager().register(this, new ServerSwitchListener(channel, config));
+        proxyServer.getEventManager().register(this, new ServerSwitchListener(channel));
 
-        logger.info("OreliaServerUtil(Velocity) initialized. channel={}, hub-server={}, server-switch-notify-enabled={}. "
+        logger.info("OreliaServerUtil(Velocity) initialized. channel={}, hub-server={}. "
                 + "Each backend Paper server also needs velocity.enabled: true and a matching \"channel\" to receive these.",
-                config.channel(), config.hubServerName(), config.serverSwitchNotifyEnabled());
+                config.channel(), config.hubServerName());
     }
 
     public ProxyServer getProxyServer() {

@@ -22,15 +22,13 @@ public final class VelocityConfig {
     private final String hubServerName;
     private final String hubFallbackMessage;
     private final int hubRequestTimeoutSeconds;
-    private final boolean serverSwitchNotifyEnabled;
 
     private VelocityConfig(String channel, String hubServerName, String hubFallbackMessage,
-                            int hubRequestTimeoutSeconds, boolean serverSwitchNotifyEnabled) {
+                            int hubRequestTimeoutSeconds) {
         this.channel = channel;
         this.hubServerName = hubServerName;
         this.hubFallbackMessage = hubFallbackMessage;
         this.hubRequestTimeoutSeconds = hubRequestTimeoutSeconds;
-        this.serverSwitchNotifyEnabled = serverSwitchNotifyEnabled;
     }
 
     @SuppressWarnings("unchecked")
@@ -68,20 +66,11 @@ public final class VelocityConfig {
         int hubRequestTimeoutSeconds = asInt(hub.get("request-timeout-seconds"),
                 ServerUtilConstants.DEFAULT_HUB_REQUEST_TIMEOUT_SECONDS);
 
-        Map<String, Object> switchNotify = root.get("server-switch-notify") instanceof Map<?, ?> m
-                ? (Map<String, Object>) m
-                : Map.of();
-        boolean switchNotifyEnabled = asBoolean(switchNotify.get("enabled"), true);
-
-        return new VelocityConfig(channel, hubServerName, hubFallbackMessage, hubRequestTimeoutSeconds, switchNotifyEnabled);
+        return new VelocityConfig(channel, hubServerName, hubFallbackMessage, hubRequestTimeoutSeconds);
     }
 
     private static int asInt(Object value, int fallback) {
         return value instanceof Number n ? n.intValue() : fallback;
-    }
-
-    private static boolean asBoolean(Object value, boolean fallback) {
-        return value instanceof Boolean b ? b : fallback;
     }
 
     private static String asString(Object value, String fallback) {
@@ -102,9 +91,5 @@ public final class VelocityConfig {
 
     public int hubRequestTimeoutSeconds() {
         return hubRequestTimeoutSeconds;
-    }
-
-    public boolean serverSwitchNotifyEnabled() {
-        return serverSwitchNotifyEnabled;
     }
 }
