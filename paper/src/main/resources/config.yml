@@ -110,11 +110,20 @@ tablist:
     footer:
       - "&7TPS: &f{tps}"
 
-# Text shown below every player's nametag (health, faction, ...). Other plugins register
-# values via rpg.serverutil.api.BelownameApi - there is no separate "enabled" flag, this
-# shows itself automatically the moment any provider (e.g. core-integration.belowname below)
-# actually produces a value, and hides again once none do. "title" supports placeholders
-# (resolved per-viewer, see the cheat sheet above).
+# Text shown below every player's nametag. Two separate pieces, because Minecraft only
+# allows ONE shared title per BELOW_NAME objective (it can't vary per target the way the
+# value can):
+#   - "title" - one label shown below EVERY player, the same for all of them (though it IS
+#     resolved per-VIEWER, so e.g. {ping} in here reflects the person looking at it, not the
+#     person being looked at). Do NOT put per-player data like {health} here - every player
+#     would show the viewer's own value, not their own (this is the #1 mix-up with this
+#     section). Static label text (or a viewer-relative token) only.
+#   - The actual per-player value (health, level, faction, ...) comes from a registered
+#     rpg.serverutil.api.BelownameApi provider instead - see core-integration.belowname.format
+#     below for the config-driven one (OreliaCore's {level}/{job}/{health}/{max_health} are
+#     genuinely per-TARGET there, since that's what BelownameValueProvider#getValue resolves
+#     against). There is no separate "enabled" flag for this whole feature - it shows itself
+#     automatically the moment any provider produces a value, and hides again once none do.
 belowname:
   title: "&dSuffix"
   update-interval-ticks: 20
@@ -197,7 +206,9 @@ core-integration:
   tablist-value:
     enabled: true
     format: "&a{ping}ms"
-  # Job display name shown below the nametag.
+  # Shown below the nametag, resolved per-TARGET (unlike belowname.title above, this genuinely
+  # differs per player) - add {health}/{max_health} here if you want each player's HP to show
+  # under their own nametag, e.g. "&7Lv.{level} {job} &c{health}&7/&c{max_health}".
   belowname:
     enabled: true
     format: "&7Lv.{level} {job}"
