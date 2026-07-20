@@ -24,20 +24,22 @@ jobs:
       - name: Build paper and velocity modules
         run: ./gradlew :paper:build :velocity:build --no-daemon --refresh-dependencies
 
+      # 同じ名前のjarが複数出る場合があるので、依存関係を含む
+      # 一番サイズの大きいjar(=shadow/fat jar)を選ぶ
       - name: Find paper jar
         id: findpaperjar
         run: |
           JAR_PATH=$(find paper/build/libs -maxdepth 1 -name '*.jar' \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-plain.jar' \
-            | head -n 1)
+            -exec ls -S {} + | head -n 1)
           echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
-
+ 
       - name: Find velocity jar
         id: findvelocityjar
         run: |
           JAR_PATH=$(find velocity/build/libs -maxdepth 1 -name '*.jar' \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-plain.jar' \
-            | head -n 1)
+            -exec ls -S {} + | head -n 1)
           echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload paper jar to Paper server 1
