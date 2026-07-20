@@ -1,0 +1,89 @@
+name: Build and Deploy Paper + Velocity to Pterodactyl
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # 両モジュールをまとめてビルド。settings.gradle(.kts)の
+      # include(":paper") / include(":velocity") の名前と違う場合は変更すること
+      - name: Build paper and velocity modules
+        run: ./gradlew :paper:build :velocity:build --no-daemon --refresh-dependencies
+
+      - name: Find paper jar
+        id: findpaperjar
+        run: |
+          JAR_PATH=$(find paper/build/libs -maxdepth 1 -name '*.jar' \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-plain.jar' \
+            | head -n 1)
+          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Find velocity jar
+        id: findvelocityjar
+        run: |
+          JAR_PATH=$(find velocity/build/libs -maxdepth 1 -name '*.jar' \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-plain.jar' \
+            | head -n 1)
+          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload paper jar to Paper server 1
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_PAPER1_SERVER_ID }}/files/write?file=%2Fplugins%2Forelia-serverutil-1.0.0.jar" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "@${{ steps.findpaperjar.outputs.jar_path }}"
+
+      - name: Upload paper jar to Paper server 2
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_PAPER2_SERVER_ID }}/files/write?file=%2Fplugins%2Forelia-serverutil-1.0.0.jar" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "@${{ steps.findpaperjar.outputs.jar_path }}"
+
+      - name: Upload velocity jar to Pterodactyl
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_VELOCITY_SERVER_ID }}/files/write?file=%2Fplugins%2Forelia-serverutil-velocity-1.0.0.jar" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "@${{ steps.findvelocityjar.outputs.jar_path }}"
+
+      - name: Send console message to Paper server 1
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_PAPER1_SERVER_ID }}/command" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"command": "say Orelia-ServerUtil File Updated [server restart required!]"}'
+
+      - name: Send console message to Paper server 2
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_PAPER2_SERVER_ID }}/command" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"command": "say Orelia-ServerUtil File Updated [server restart required!]"}'
+
+      - name: Restart velocity server
+        run: |
+          curl -sS -f -X POST \
+            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_VELOCITY_SERVER_ID }}/power" \
+            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"signal":"restart"}'
