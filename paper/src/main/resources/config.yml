@@ -28,7 +28,8 @@ config-version: 1
 #   OreliaCore-sourced (silently left as literal text if OreliaCore isn't installed):
 #     {level}       - the player's OreliaCore level
 #     {job}         - the player's current job display name (empty if no job chosen yet)
-#     {money}       - the player's OreliaCore balance, k/m-formatted (e.g. "1.5k", "2m")
+#     {money}       - the player's OreliaCore balance, k/m/b/t-formatted (e.g. "1.5k", "2m",
+#                     "3b", "4t")
 #     {health}      - the player's CURRENT OreliaCore HP (not vanilla health - this is
 #                     Orelia's own RPG health pool)
 #     {max_health}  - the player's MAX OreliaCore HP
@@ -220,7 +221,7 @@ core-integration:
   # under their own nametag, e.g. "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}".
   belowname:
     enabled: true
-    format: "&%7Lv.{level} {job}"
+    format: "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}"
   # Level + job shown next to the sender's name in chat.
   chat:
     enabled: true
