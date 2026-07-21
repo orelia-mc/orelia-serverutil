@@ -196,8 +196,8 @@ core-integration:
   scoreboard:
     enabled: true
     lines:
-      - "&%fLv. &%e{level}"
-      - "&%fG: &%6{money}"
+      - " &%7Lv. &%e{level}"
+      - " &%7G: &%6{money}"
   # Tab-list/nametag color (by job id, "&"-code style) + level suffix. Job ids are whatever
   # OreliaCore's JobApi returns (e.g. FENCER/WARRIOR/ARCHER) - add/remove keys to match your
   # jobs.yml, unmapped jobs just get no color override.
