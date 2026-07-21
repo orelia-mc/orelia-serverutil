@@ -10,6 +10,10 @@ dependencies {
     // happens to be installed (see rpg.serverutil.paper.integration.CoreIntegrationModule).
     // Every ServicesManager lookup must null-guard; this plugin must start fine without it.
     compileOnly("com.github.orelia-mc:orelia-core:main-SNAPSHOT")
+    // Soft dependency only - GuildApi/PartyApi are used opportunistically when OreliaExtra
+    // happens to be installed (see rpg.serverutil.paper.placeholder.PlaceholderService's
+    // {guild}/{guild_tag}/{party} tokens). Every ServicesManager lookup must null-guard.
+    compileOnly("com.github.orelia-mc:orelia-extra:main-SNAPSHOT")
     // Soft dependency only - see rpg.serverutil.paper.placeholder.PlaceholderApiHook, the only
     // class allowed to reference this directly (isolated so a missing PlaceholderAPI jar at
     // runtime never triggers NoClassDefFoundError anywhere else).

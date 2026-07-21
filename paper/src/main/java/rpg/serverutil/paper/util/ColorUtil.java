@@ -40,7 +40,7 @@ public final class ColorUtil {
             Map.entry('3', "3BA1A1"), // cyan
             Map.entry('4', "A62626"), // red
             Map.entry('5', "AB52AB"), // purple
-            Map.entry('6', "E0A934"), // gold
+            Map.entry('6', "FFAA00"), // gold
             Map.entry('7', "AAAAAA"), // gray
             Map.entry('8', "4A4A4A"), // dark gray
             Map.entry('9', "6969D7"), // light blue

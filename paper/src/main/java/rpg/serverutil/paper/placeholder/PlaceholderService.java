@@ -5,7 +5,10 @@ import org.bukkit.entity.Player;
 import rpg.api.EconomyApi;
 import rpg.api.JobApi;
 import rpg.api.StatusApi;
+import rpg.extra.api.GuildApi;
+import rpg.extra.api.PartyApi;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
+import rpg.serverutil.paper.util.MoneyFormat;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,7 +27,11 @@ import java.time.format.DateTimeFormatter;
  *       {@code {health}}/{@code {max_health}} come from {@link StatusApi#getCurrentHp} /
  *       {@code getFinalStats}'s {@code "HP"} entry - deliberately NOT vanilla
  *       {@link Player#getHealth()}, since Orelia tracks its own RPG health separately from the
- *       vanilla health bar.</li>
+ *       vanilla health bar. {@code {money}} is formatted via {@link MoneyFormat}.</li>
+ *   <li>OreliaExtra tokens - resolved via its published {@code rpg.extra.api} interfaces
+ *       (soft dependency, silently left as literal text if OreliaExtra isn't installed):
+ *       {@code {guild}}/{@code {guild_tag}} (empty string if not in a guild) and
+ *       {@code {party}} (a colored marker if in a party, empty string otherwise).</li>
  * </ul>
  *
  * <p>If PlaceholderAPI is installed, any remaining {@code %...%} placeholders are resolved
@@ -47,6 +54,7 @@ public final class PlaceholderService {
     public String resolve(String template, Player player) {
         String result = resolveBuiltIn(template, player);
         result = resolveCoreTokens(result, player);
+        result = resolveExtraTokens(result, player);
         if (placeholderApiPresent) {
             result = PlaceholderApiHook.resolve(player, result);
         }
@@ -89,7 +97,25 @@ public final class PlaceholderService {
         if (result.contains("{money}")) {
             EconomyApi economyApi = plugin.getServer().getServicesManager().load(EconomyApi.class);
             if (economyApi != null) {
-                result = result.replace("{money}", String.valueOf((long) economyApi.getBalance(player.getUniqueId())));
+                result = result.replace("{money}", MoneyFormat.format(economyApi.getBalance(player.getUniqueId())));
+            }
+        }
+        return result;
+    }
+
+    private String resolveExtraTokens(String template, Player player) {
+        String result = template;
+        if (result.contains("{guild}") || result.contains("{guild_tag}")) {
+            GuildApi guildApi = plugin.getServer().getServicesManager().load(GuildApi.class);
+            if (guildApi != null) {
+                result = result.replace("{guild}", guildApi.getGuildName(player.getUniqueId()).orElse(""))
+                        .replace("{guild_tag}", guildApi.getGuildTag(player.getUniqueId()).orElse(""));
+            }
+        }
+        if (result.contains("{party}")) {
+            PartyApi partyApi = plugin.getServer().getServicesManager().load(PartyApi.class);
+            if (partyApi != null) {
+                result = result.replace("{party}", partyApi.isInParty(player.getUniqueId()) ? "&%9◆" : "");
             }
         }
         return result;
