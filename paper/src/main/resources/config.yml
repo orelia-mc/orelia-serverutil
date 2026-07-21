@@ -101,9 +101,18 @@ scoreboard:
   lines:
     - " &%7Online: &%f{online}&%7/&%f{max_online} "
     - " &%7TPS: &%f{tps} "
+  # OreliaCore-sourced sidebar lines (level/money by default) - requires core-integration.enabled:
+  # true and OreliaCore installed, otherwise this whole sub-section is a no-op. Renders above
+  # "lines" above by default (registered at priority 100 vs "lines"/other plugins' priority 0).
+  core-lines:
+    enabled: true
+    lines:
+      - " &%7Lv. &%e{level}"
+      - " &%7G: &%6{money}"
 
-# Tab-list name prefix/suffix. Other plugins register formatters via
-# rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default.
+# Tab-list name prefix/suffix/color and right-side value. Other plugins register formatters via
+# rpg.serverutil.api.TabListApi - this plugin alone shows nothing by default (aside from the
+# OreliaCore-sourced name-color/value sub-sections below).
 tablist:
   update-interval-ticks: 40
   # Text shown above/below the player list. Each list entry is one line (placeholders
@@ -115,6 +124,29 @@ tablist:
       - "&%7Online: &%f{online}&%7/&%f{max_online}"
     footer:
       - "&%7TPS: &%f{tps}"
+  # OreliaCore-sourced tab-list/nametag color (by job id, "&"-code style) + prefix/suffix text -
+  # requires core-integration.enabled: true and OreliaCore installed. Job ids are whatever
+  # OreliaCore's JobApi returns (e.g. FENCER/WARRIOR/ARCHER) - add/remove keys to match your
+  # jobs.yml, unmapped jobs just get no color override. The same Team also colors the player's
+  # above-head nametag (see TabListManager's class Javadoc for why they're not independently
+  # configurable).
+  name-color:
+    enabled: true
+    prefix-format: ""
+    suffix-format: " &%7[Lv.{level}]"
+    # NOTE: these must stay plain legacy &-codes (&0-&9/&a-&f), NOT the &%-prefixed custom
+    # palette used everywhere else in this config - a job color feeds a scoreboard Team's
+    # color (org.bukkit.scoreboard.Team#setColor), which only accepts the 16 legacy
+    # org.bukkit.ChatColor values, not arbitrary hex. See CoreIntegrationModule#parseJobColors.
+    job-colors:
+      FENCER: "&b"
+      WARRIOR: "&c"
+      ARCHER: "&a"
+  # OreliaCore-sourced value shown on the right side of the tab-list entry (level by default) -
+  # requires core-integration.enabled: true and OreliaCore installed.
+  value:
+    enabled: true
+    format: "&%a{ping}ms"
 
 # Text shown below every player's nametag. Two separate pieces, because Minecraft only
 # allows ONE shared title per BELOW_NAME objective (it can't vary per target the way the
@@ -125,7 +157,7 @@ tablist:
 #     would show the viewer's own value, not their own (this is the #1 mix-up with this
 #     section). Static label text (or a viewer-relative token) only.
 #   - The actual per-player value (health, level, faction, ...) comes from a registered
-#     rpg.serverutil.api.BelownameApi provider instead - see core-integration.belowname.format
+#     rpg.serverutil.api.BelownameApi provider instead - see belowname.core-format.format
 #     below for the config-driven one (OreliaCore's {level}/{job}/{health}/{max_health} are
 #     genuinely per-TARGET there, since that's what BelownameValueProvider#getValue resolves
 #     against). There is no separate "enabled" flag for this whole feature - it shows itself
@@ -133,6 +165,13 @@ tablist:
 belowname:
   title: "&%dSuffix"
   update-interval-ticks: 20
+  # OreliaCore-sourced per-target value (level + job by default) - requires
+  # core-integration.enabled: true and OreliaCore installed. Genuinely differs per player
+  # (unlike "title" above) - add {health}/{max_health} here if you want each player's HP to
+  # show under their own nametag, e.g. "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}".
+  core-format:
+    enabled: true
+    format: "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}"
 
 # Chat formatting. {placeholder} is resolved via rpg.serverutil.api.ChatApi (level/title/rank
 # from other plugins, empty string if nothing registered) - include any brackets/spacing you
@@ -159,6 +198,11 @@ chat:
   color-codes:
     enabled: true
     permission: "orelia.serverutil.chat.color"
+  # OreliaCore-sourced value shown next to the sender's name in chat (level + job by default) -
+  # requires core-integration.enabled: true and OreliaCore installed.
+  core-placeholder:
+    enabled: true
+    format: "&%7[Lv.{level}] &%b{job}&r "
 
 # Welcome announcement shown a short delay after join (chat lines + optional title).
 announce:
@@ -185,44 +229,11 @@ join:
   # - ignored otherwise.
   server-switch-wait-ticks: 20
 
-# Feeds OreliaCore's level/job/balance data into this plugin's own display APIs, if
-# OreliaCore happens to be installed. Set to false to disable even when OreliaCore is
-# present; each sub-section below can also be disabled independently.
+# Master switch for every OreliaCore-sourced feature this plugin offers (sidebar lines, tab-list
+# name color/prefix/suffix/value, belowname, chat placeholder). When true (and OreliaCore is
+# installed), those features work per their own individual "enabled" flag - see
+# scoreboard.core-lines / tablist.name-color / tablist.value / belowname.core-format /
+# chat.core-placeholder in their respective sections above. When false, none of them do
+# anything even if individually enabled there.
 core-integration:
   enabled: true
-  # Sidebar lines (see scoreboard.lines above for the mechanism - this is a second,
-  # independent ScoreboardLineProvider registered at priority 100, so it renders above
-  # scoreboard.lines by default).
-  scoreboard:
-    enabled: true
-    lines:
-      - " &%7Lv. &%e{level}"
-      - " &%7G: &%6{money}"
-  # Tab-list/nametag color (by job id, "&"-code style) + level suffix. Job ids are whatever
-  # OreliaCore's JobApi returns (e.g. FENCER/WARRIOR/ARCHER) - add/remove keys to match your
-  # jobs.yml, unmapped jobs just get no color override.
-  tablist:
-    enabled: true
-    suffix-format: " &%7[Lv.{level}]"
-    # NOTE: these must stay plain legacy &-codes (&0-&9/&a-&f), NOT the &%-prefixed custom
-    # palette used everywhere else in this config - a job color feeds a scoreboard Team's
-    # color (org.bukkit.scoreboard.Team#setColor), which only accepts the 16 legacy
-    # org.bukkit.ChatColor values, not arbitrary hex. See CoreIntegrationModule#parseJobColors.
-    job-colors:
-      FENCER: "&b"
-      WARRIOR: "&c"
-      ARCHER: "&a"
-  # Level shown on the right side of the tab-list entry.
-  tablist-value:
-    enabled: true
-    format: "&%a{ping}ms"
-  # Shown below the nametag, resolved per-TARGET (unlike belowname.title above, this genuinely
-  # differs per player) - add {health}/{max_health} here if you want each player's HP to show
-  # under their own nametag, e.g. "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}".
-  belowname:
-    enabled: true
-    format: "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}"
-  # Level + job shown next to the sender's name in chat.
-  chat:
-    enabled: true
-    placeholder-format: "&%7[Lv.{level}] &%b{job}&r "
