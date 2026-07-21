@@ -6,7 +6,7 @@ import rpg.serverutil.paper.placeholder.PlaceholderService;
 
 import java.util.List;
 
-/** Config-driven, {@link PlaceholderService}-resolved sidebar lines (level/money by default) - see {@code core-integration.scoreboard} in config.yml. */
+/** Config-driven, {@link PlaceholderService}-resolved sidebar lines (level/money by default) - see {@code scoreboard.core-lines} in config.yml. */
 final class CoreStatusLineProvider implements ScoreboardLineProvider {
 
     private final PlaceholderService placeholders;

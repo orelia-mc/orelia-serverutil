@@ -126,7 +126,7 @@ directly, isolated so a missing PlaceholderAPI jar never triggers `NoClassDefFou
 elsewhere. When adding a new config-driven text field, resolve it through this service rather
 than adding another one-off `.replace(...)` chain. `CoreStatusLineProvider` (the sidebar's
 level/money line) is a `ScoreboardLineProvider`, not a `format` string, so it doesn't fit that
-pattern directly - it takes `core-integration.scoreboard.lines` as a `List<String>` and
+pattern directly - it takes `scoreboard.core-lines.lines` as a `List<String>` and
 resolves each line the same way. `ChatModule`'s `chat.color-codes` is a separate mechanism,
 not placeholder-related: gated by the `orelia.serverutil.chat.color` permission (default op,
 see plugin.yml), it lets the *sender* use `&`-color codes in their own typed message, resolved

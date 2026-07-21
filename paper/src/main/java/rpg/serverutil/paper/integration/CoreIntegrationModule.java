@@ -22,10 +22,17 @@ import java.util.Map;
  * Optional bridge to OreliaCore (soft dependency): if any of {@link StatusApi}/
  * {@link EconomyApi}/{@link JobApi} happen to be published, registers config-driven,
  * {@link PlaceholderService}-resolved providers into every display API this plugin offers -
- * sidebar line, tab-list name color/suffix, tab-list right-side value, belowname, and chat
- * placeholder. This plugin works fine without OreliaCore installed at all (see plugin.yml
- * {@code softdepend}); each registration below independently null-guards the specific API it
- * needs.
+ * sidebar line, tab-list name color/prefix/suffix, tab-list right-side value, belowname, and
+ * chat placeholder. This plugin works fine without OreliaCore installed at all (see
+ * plugin.yml {@code softdepend}); each registration below independently null-guards the
+ * specific API it needs.
+ *
+ * <p>{@code core-integration.enabled} is the single master switch (checked once in
+ * {@link #onEnable}) - when {@code false}, none of the OreliaCore-sourced sections below
+ * (each living under its own feature's top-level config block, e.g.
+ * {@code tablist.name-color}/{@code scoreboard.core-lines}/{@code belowname.core-format}/
+ * {@code chat.core-placeholder}) do anything, regardless of their own individual
+ * {@code enabled} flag.
  */
 public final class CoreIntegrationModule implements ServerUtilModule {
 
@@ -75,14 +82,14 @@ public final class CoreIntegrationModule implements ServerUtilModule {
     }
 
     private void registerScoreboardLine(OreliaServerUtilPlugin plugin, YamlConfiguration config, PlaceholderService placeholders) {
-        if (!config.getBoolean("core-integration.scoreboard.enabled", true)) {
+        if (!config.getBoolean("scoreboard.core-lines.enabled", true)) {
             return;
         }
         ScoreboardApi scoreboardApi = plugin.getServer().getServicesManager().load(ScoreboardApi.class);
         if (scoreboardApi == null) {
             return;
         }
-        List<String> lines = config.getStringList("core-integration.scoreboard.lines");
+        List<String> lines = config.getStringList("scoreboard.core-lines.lines");
         if (lines.isEmpty()) {
             return;
         }
@@ -91,41 +98,42 @@ public final class CoreIntegrationModule implements ServerUtilModule {
 
     private void registerTabListName(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,
                                       PlaceholderService placeholders) {
-        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.tablist.enabled", true)) {
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("tablist.name-color.enabled", true)) {
             return;
         }
         TabListApi tabListApi = plugin.getServer().getServicesManager().load(TabListApi.class);
         if (tabListApi == null) {
             return;
         }
-        Map<String, ChatColor> jobColors = parseJobColors(config.getConfigurationSection("core-integration.tablist.job-colors"));
-        String suffixFormat = config.getString("core-integration.tablist.suffix-format", " &%7[Lv.{level}]");
-        tabListApi.registerFormatter(new CoreTabListFormatter(jobApi, placeholders, jobColors, suffixFormat));
+        Map<String, ChatColor> jobColors = parseJobColors(config.getConfigurationSection("tablist.name-color.job-colors"));
+        String prefixFormat = config.getString("tablist.name-color.prefix-format", "");
+        String suffixFormat = config.getString("tablist.name-color.suffix-format", " &%7[Lv.{level}]");
+        tabListApi.registerFormatter(new CoreTabListFormatter(jobApi, placeholders, jobColors, prefixFormat, suffixFormat));
     }
 
     private void registerTabListValue(OreliaServerUtilPlugin plugin, YamlConfiguration config, StatusApi statusApi,
                                        PlaceholderService placeholders) {
-        if (statusApi == null || !config.getBoolean("core-integration.tablist-value.enabled", true)) {
+        if (statusApi == null || !config.getBoolean("tablist.value.enabled", true)) {
             return;
         }
         TabListApi tabListApi = plugin.getServer().getServicesManager().load(TabListApi.class);
         if (tabListApi == null) {
             return;
         }
-        String valueFormat = config.getString("core-integration.tablist-value.format", "&%aLv.{level}");
+        String valueFormat = config.getString("tablist.value.format", "&%aLv.{level}");
         tabListApi.registerValueProvider(new CoreTabListValueProvider(placeholders, valueFormat));
     }
 
     private void registerBelowname(OreliaServerUtilPlugin plugin, YamlConfiguration config, JobApi jobApi, StatusApi statusApi,
                                     PlaceholderService placeholders) {
-        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.belowname.enabled", true)) {
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("belowname.core-format.enabled", true)) {
             return;
         }
         BelownameApi belownameApi = plugin.getServer().getServicesManager().load(BelownameApi.class);
         if (belownameApi == null) {
             return;
         }
-        String format = config.getString("core-integration.belowname.format", "&%7Lv.{level} {job}");
+        String format = config.getString("belowname.core-format.format", "&%7Lv.{level} {job}");
         belownameApi.registerProvider(new CoreBelownameProvider(placeholders, format));
     }
 
@@ -135,14 +143,14 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         // guard registerTabListName/registerBelowname already apply, so this doesn't sit in
         // every chat message as literal "[Lv.{level}] {job}" text on a partial OreliaCore
         // install (e.g. only EconomyApi present).
-        if ((jobApi == null && statusApi == null) || !config.getBoolean("core-integration.chat.enabled", true)) {
+        if ((jobApi == null && statusApi == null) || !config.getBoolean("chat.core-placeholder.enabled", true)) {
             return;
         }
         ChatApi chatApi = plugin.getServer().getServicesManager().load(ChatApi.class);
         if (chatApi == null) {
             return;
         }
-        String format = config.getString("core-integration.chat.placeholder-format", "&%7[Lv.{level}] &%b{job}&r ");
+        String format = config.getString("chat.core-placeholder.format", "&%7[Lv.{level}] &%b{job}&r ");
         chatApi.registerProvider(new CoreChatPlaceholderProvider(placeholders, format));
     }
 
@@ -161,7 +169,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         for (String jobId : section.getKeys(false)) {
             String raw = section.getString(jobId, "").trim();
             if (raw.length() != 2 || raw.charAt(0) != '&' || ChatColor.getByChar(raw.charAt(1)) == null) {
-                plugin.getLogger().warning("core-integration.tablist.job-colors." + jobId + " (\"" + raw + "\") isn't a "
+                plugin.getLogger().warning("tablist.name-color.job-colors." + jobId + " (\"" + raw + "\") isn't a "
                         + "legacy &-color code (e.g. \"&b\") - job colors can't use the &% custom palette "
                         + "since scoreboard Team colors don't support hex. Skipping this entry.");
                 continue;
