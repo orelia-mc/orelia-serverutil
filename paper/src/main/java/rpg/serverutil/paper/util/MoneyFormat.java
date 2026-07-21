@@ -3,10 +3,12 @@ package rpg.serverutil.paper.util;
 import java.util.Locale;
 
 /**
- * Formats a money amount into a compact {@code k}/{@code m}-suffixed string (e.g. {@code 1500}
- * -> {@code "1.5k"}, {@code 2000000} -> {@code "2m"}), used by the {@code {money}} placeholder.
- * Independent copy of orelia-core's {@code rpg.util.MoneyFormat} (this plugin only softdepends
- * on OreliaCore) - keep the two in sync when changing formatting behavior.
+ * Formats a money amount into a compact {@code k}/{@code m}/{@code b}/{@code t}-suffixed
+ * string (e.g. {@code 1500} -> {@code "1.5k"}, {@code 2000000} -> {@code "2m"},
+ * {@code 3_000_000_000} -> {@code "3b"}, {@code 4_000_000_000_000} -> {@code "4t"}), used by
+ * the {@code {money}} placeholder. Independent copy of orelia-core's
+ * {@code rpg.util.MoneyFormat} (this plugin only softdepends on OreliaCore) - keep the two in
+ * sync when changing formatting behavior.
  */
 public final class MoneyFormat {
 
@@ -16,6 +18,12 @@ public final class MoneyFormat {
     public static String format(double amount) {
         double abs = Math.abs(amount);
         String sign = amount < 0 ? "-" : "";
+        if (abs >= 1_000_000_000_000.0) {
+            return sign + trimTrailingZero(abs / 1_000_000_000_000.0) + "t";
+        }
+        if (abs >= 1_000_000_000.0) {
+            return sign + trimTrailingZero(abs / 1_000_000_000.0) + "b";
+        }
         if (abs >= 1_000_000) {
             return sign + trimTrailingZero(abs / 1_000_000) + "m";
         }
