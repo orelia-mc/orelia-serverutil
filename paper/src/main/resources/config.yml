@@ -28,10 +28,15 @@ config-version: 1
 #   OreliaCore-sourced (silently left as literal text if OreliaCore isn't installed):
 #     {level}       - the player's OreliaCore level
 #     {job}         - the player's current job display name (empty if no job chosen yet)
-#     {money}       - the player's OreliaCore balance (whole number)
+#     {money}       - the player's OreliaCore balance, k/m-formatted (e.g. "1.5k", "2m")
 #     {health}      - the player's CURRENT OreliaCore HP (not vanilla health - this is
 #                     Orelia's own RPG health pool)
 #     {max_health}  - the player's MAX OreliaCore HP
+#
+#   OreliaExtra-sourced (silently left as literal text if OreliaExtra isn't installed):
+#     {guild}       - the player's guild name (empty if not in a guild)
+#     {guild_tag}   - the player's guild tag (empty if not in a guild)
+#     {party}       - a colored marker if the player is in a party, empty string otherwise
 #
 #   If the PlaceholderAPI plugin is also installed, any %placeholder% syntax it supports
 #   works too (resolved last, after all tokens above) - e.g. a permissions plugin's
