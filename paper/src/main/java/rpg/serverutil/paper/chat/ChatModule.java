@@ -24,12 +24,15 @@ import java.util.List;
  * tooltip (join time, level, job, ...) to the sender's name - see {@code chat.tooltip} in
  * config.yml. The placeholder is resolved once per message (not per-viewer) through
  * {@link ChatApi}, matching {@code BelownameApi}'s convention - the same text/tooltip is
- * shown to everyone reading the message.
+ * shown to everyone reading the message. Also highlights {@code @name}/{@code @all} mentions
+ * and pings whoever got mentioned with a sound - see {@link MentionService} and {@code
+ * mention.*} in config.yml.
  */
 public final class ChatModule implements ServerUtilModule, Listener {
 
     private OreliaServerUtilPlugin plugin;
     private ChatManager manager;
+    private MentionService mentionService;
 
     @Override
     public String getName() {
@@ -43,6 +46,7 @@ public final class ChatModule implements ServerUtilModule, Listener {
             return;
         }
         this.manager = new ChatManager();
+        this.mentionService = new MentionService(plugin);
         plugin.getServer().getServicesManager().register(ChatApi.class, manager, plugin, ServicePriority.Normal);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -58,7 +62,8 @@ public final class ChatModule implements ServerUtilModule, Listener {
         String placeholderText = manager.resolve(event.getPlayer()).orElse("");
         Component placeholder = ColorUtil.component(placeholderText);
         Component tooltip = buildTooltip(config, event.getPlayer());
-        Component message = resolveMessage(config, event.getPlayer(), event.message());
+        String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
+        Component message = mentionService.highlight(plainMessage, event.getPlayer(), colorCodesPermitted(config, event.getPlayer()));
 
         event.renderer(ChatRenderer.viewerUnaware((source, sourceDisplayName, ignoredMessage) -> {
             Component sender = tooltip != null ? sourceDisplayName.hoverEvent(HoverEvent.showText(tooltip)) : sourceDisplayName;
@@ -67,21 +72,19 @@ public final class ChatModule implements ServerUtilModule, Listener {
     }
 
     /**
-     * Lets a player use {@code &}-color codes (legacy, {@code &#RRGGBB} hex, and OreliaCore's
-     * custom {@code &%<char>} codes - see {@link ColorUtil}) directly in their own chat
-     * messages, gated by {@code chat.color-codes.permission} (op-only by default, see
-     * plugin.yml). Everyone else's message passes through unchanged - typed {@code &} codes
-     * just show up as literal text, same as vanilla chat.
+     * Whether {@code sender} may use {@code &}-color codes (legacy, {@code &#RRGGBB} hex, and
+     * OreliaCore's custom {@code &%<char>} codes - see {@link ColorUtil}) directly in their own
+     * chat messages, gated by {@code chat.color-codes.permission} (op-only by default, see
+     * plugin.yml). Passed into {@link MentionService#highlight} so the non-mention portions of
+     * the message are colorized consistently with this setting; everyone else's typed {@code &}
+     * codes just show up as literal text, same as vanilla chat.
      */
-    private Component resolveMessage(YamlConfiguration config, Player sender, Component original) {
+    private boolean colorCodesPermitted(YamlConfiguration config, Player sender) {
         if (!config.getBoolean("chat.color-codes.enabled", true)) {
-            return original;
+            return false;
         }
         String permission = config.getString("chat.color-codes.permission", "orelia.serverutil.chat.color");
-        if (!sender.hasPermission(permission)) {
-            return original;
-        }
-        return ColorUtil.component(PlainTextComponentSerializer.plainText().serialize(original));
+        return sender.hasPermission(permission);
     }
 
     /** Builds the (message-send-time) hover tooltip Component shown when hovering over the sender's name, or {@code null} if disabled. */

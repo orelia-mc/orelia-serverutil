@@ -16,3 +16,6 @@ permissions:
   orelia.serverutil.chat.color:
     description: Lets a player use &-color codes (legacy, hex, and custom) directly in chat.
     default: op
+  orelia.serverutil.chat.mention.all:
+    description: Lets a player use "@all" in chat to mention (and ping) every online player.
+    default: op

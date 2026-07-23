@@ -134,6 +134,15 @@ via `ColorUtil.component` on the plain-text-serialized message rather than throu
 `PlaceholderService`. The full token list is documented in the
 cheat-sheet comment at the top of `config.yml`.
 
+`ChatModule` also delegates to `MentionService` (`mention.*` in config.yml) to highlight
+`@name`/`@all` mentions and ping whoever got mentioned with a sound - this runs on the same
+plain-text-serialized message as `chat.color-codes` (regex-matched against currently-online
+player names, case-insensitively; unrecognized `@word`s are left as literal text) and is
+independent of `PlaceholderService` too. `@all` is gated by `orelia.serverutil.chat.mention.all`
+(default op) so it can't be spammed by anyone typing the word. This only covers public chat -
+orelia-extra's party/guild/admin chat channels have their own separate broadcast path this
+doesn't reach.
+
 ### Commands
 
 Unlike orelia-world/orelia-extra/orelia-debug, this plugin does **not** register into
