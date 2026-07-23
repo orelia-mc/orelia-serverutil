@@ -6,7 +6,7 @@
 # added - on next startup, ConfigManager appends the new section (with its comments) to any
 # existing config.yml that's missing it, without touching anything you've already customized.
 # Never bump this for a value-only change (e.g. tweaking a default), only for new/removed keys.
-config-version: 1
+config-version: 2
 #
 # ============================== PLACEHOLDER CHEAT SHEET ==============================
 # Every "format"/"suffix-format"/"placeholder-format" key below (and announce.lines/
@@ -203,6 +203,28 @@ chat:
   core-placeholder:
     enabled: true
     format: "&%7[Lv.{level}] &%b{job}&r "
+
+# Highlights "@name" mentions in public chat (see rpg.serverutil.paper.chat.MentionService) and
+# plays a sound to whoever got mentioned. Unrecognized "@word"s (no online player by that name)
+# are left as literal text - only exact, case-insensitive online-player-name matches count.
+mention:
+  enabled: true
+  # {name} is replaced with the mentioned player's actual-case name (or "all"/mention.all.keyword
+  # for an @all mention).
+  format: "&%6[&%e@{name}&%6]&r"
+  sound:
+    enabled: true
+    # Any org.bukkit.Sound constant name - see
+    # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+    name: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    volume: 1.0
+    pitch: 1.0
+  # "@all" (or whatever "keyword" is renamed to) mentions - and pings - every online player.
+  # Gated by "permission" (op-only by default) so it can't be spammed by anyone typing the word.
+  all:
+    enabled: true
+    keyword: "all"
+    permission: "orelia.serverutil.chat.mention.all"
 
 # Welcome announcement shown a short delay after join (chat lines + optional title).
 announce:
