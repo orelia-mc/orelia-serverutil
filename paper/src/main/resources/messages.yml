@@ -1,6 +1,7 @@
 # Centralized user-facing text. Every chat message goes through rpg.serverutil.paper.message.
 # MessageManager, keyed by the dotted paths below - do not hardcode ChatColor + literal
 # strings in command/listener code, add a key here instead.
+config-version: 1
 
 prefix: "&%8[&%6ServerUtil&%8] &r"
 
