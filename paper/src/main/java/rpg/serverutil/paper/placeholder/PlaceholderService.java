@@ -9,6 +9,7 @@ import rpg.extra.api.GuildApi;
 import rpg.extra.api.PartyApi;
 import rpg.serverutil.paper.OreliaServerUtilPlugin;
 import rpg.serverutil.paper.util.MoneyFormat;
+import rpg.world.api.QuestApi;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +33,10 @@ import java.time.format.DateTimeFormatter;
  *       (soft dependency, silently left as literal text if OreliaExtra isn't installed):
  *       {@code {guild}}/{@code {guild_tag}} (empty string if not in a guild) and
  *       {@code {party}} (a colored marker if in a party, empty string otherwise).</li>
+ *   <li>OreliaWorld tokens - resolved via its published {@code rpg.world.api} interfaces
+ *       (soft dependency, silently left as literal text if OreliaWorld isn't installed):
+ *       {@code {title}} (the player's currently-equipped quest title via
+ *       {@link QuestApi#getEquippedTitle}, empty string if none is equipped).</li>
  * </ul>
  *
  * <p>If PlaceholderAPI is installed, any remaining {@code %...%} placeholders are resolved
@@ -55,6 +60,7 @@ public final class PlaceholderService {
         String result = resolveBuiltIn(template, player);
         result = resolveCoreTokens(result, player);
         result = resolveExtraTokens(result, player);
+        result = resolveWorldTokens(result, player);
         if (placeholderApiPresent) {
             result = PlaceholderApiHook.resolve(player, result);
         }
@@ -116,6 +122,17 @@ public final class PlaceholderService {
             PartyApi partyApi = plugin.getServer().getServicesManager().load(PartyApi.class);
             if (partyApi != null) {
                 result = result.replace("{party}", partyApi.isInParty(player.getUniqueId()) ? "&%9◆" : "");
+            }
+        }
+        return result;
+    }
+
+    private String resolveWorldTokens(String template, Player player) {
+        String result = template;
+        if (result.contains("{title}")) {
+            QuestApi questApi = plugin.getServer().getServicesManager().load(QuestApi.class);
+            if (questApi != null) {
+                result = result.replace("{title}", questApi.getEquippedTitle(player.getUniqueId()).orElse(""));
             }
         }
         return result;

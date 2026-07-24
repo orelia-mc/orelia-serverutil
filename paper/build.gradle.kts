@@ -14,6 +14,10 @@ dependencies {
     // happens to be installed (see rpg.serverutil.paper.placeholder.PlaceholderService's
     // {guild}/{guild_tag}/{party} tokens). Every ServicesManager lookup must null-guard.
     compileOnly("com.github.orelia-mc:orelia-extra:main-SNAPSHOT")
+    // Soft dependency only - QuestApi's equipped-title lookup is used opportunistically when
+    // OreliaWorld happens to be installed (see PlaceholderService's {title} token). Every
+    // ServicesManager lookup must null-guard.
+    compileOnly("com.github.orelia-mc:orelia-world:main-SNAPSHOT")
     // Soft dependency only - see rpg.serverutil.paper.placeholder.PlaceholderApiHook, the only
     // class allowed to reference this directly (isolated so a missing PlaceholderAPI jar at
     // runtime never triggers NoClassDefFoundError anywhere else).
