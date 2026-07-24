@@ -4,7 +4,7 @@ main: rpg.serverutil.paper.OreliaServerUtilPlugin
 api-version: '1.21'
 description: Orelia server utility plugin - hub transfer, world setup, scoreboard/tablist API, join messages
 folia-supported: false
-softdepend: [OreliaCore, OreliaExtra, PlaceholderAPI]
+softdepend: [OreliaCore, OreliaExtra, OreliaWorld, PlaceholderAPI]
 commands:
   suadmin:
     description: OreliaServerUtil admin commands.

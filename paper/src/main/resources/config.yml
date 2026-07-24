@@ -39,6 +39,10 @@ config-version: 2
 #     {guild_tag}   - the player's guild tag (empty if not in a guild)
 #     {party}       - a colored marker if the player is in a party, empty string otherwise
 #
+#   OreliaWorld-sourced (silently left as literal text if OreliaWorld isn't installed):
+#     {title}       - the player's currently-equipped quest title (/ol title equip), empty
+#                     string if none is equipped
+#
 #   If the PlaceholderAPI plugin is also installed, any %placeholder% syntax it supports
 #   works too (resolved last, after all tokens above) - e.g. a permissions plugin's
 #   %luckperms_prefix% for a rank tag.
@@ -133,7 +137,7 @@ tablist:
   name-color:
     enabled: true
     prefix-format: ""
-    suffix-format: " &%7[Lv.{level}]"
+    suffix-format: " &%7[Lv.{level}] {title}"
     # NOTE: these must stay plain legacy &-codes (&0-&9/&a-&f), NOT the &%-prefixed custom
     # palette used everywhere else in this config - a job color feeds a scoreboard Team's
     # color (org.bukkit.scoreboard.Team#setColor), which only accepts the 16 legacy
@@ -171,7 +175,7 @@ belowname:
   # show under their own nametag, e.g. "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}".
   core-format:
     enabled: true
-    format: "&%7Lv.{level} {job} &%c{health}&%7/&%c{max_health}"
+    format: "&%7Lv.{level} {job} {title} &%c{health}&%7/&%c{max_health}"
 
 # Chat formatting. {placeholder} is resolved via rpg.serverutil.api.ChatApi (level/title/rank
 # from other plugins, empty string if nothing registered) - include any brackets/spacing you
@@ -202,7 +206,7 @@ chat:
   # requires core-integration.enabled: true and OreliaCore installed.
   core-placeholder:
     enabled: true
-    format: "&%7[Lv.{level}] &%b{job}&r "
+    format: "&%7[Lv.{level}] &%b{job}&r {title} "
 
 # Highlights "@name" mentions in public chat (see rpg.serverutil.paper.chat.MentionService) and
 # plays a sound to whoever got mentioned. Unrecognized "@word"s (no online player by that name)
