@@ -6,7 +6,7 @@
 # added - on next startup, ConfigManager appends the new section (with its comments) to any
 # existing config.yml that's missing it, without touching anything you've already customized.
 # Never bump this for a value-only change (e.g. tweaking a default), only for new/removed keys.
-config-version: 2
+config-version: 3
 #
 # ============================== PLACEHOLDER CHEAT SHEET ==============================
 # Every "format"/"suffix-format"/"placeholder-format" key below (and announce.lines/
@@ -77,17 +77,41 @@ hub:
 
 # /suadmin worldsetup <world> [profile] applies a named profile's gamerules in one go.
 # Any vanilla gamerule name (see https://minecraft.wiki/w/Game_rule) works as a key.
+log-filter:
+  # Suppresses console log lines whose formatted message matches any of these (Java regex,
+  # case-insensitive, matched anywhere in the line - no need to anchor with ^/$ unless you
+  # want to). Applied globally, not just to this plugin's own logger, since these lines come
+  # from Minecraft's own internal server code - useful for noisy vanilla spam like "Named
+  # entity X died" (every custom-named entity logs this on death, and every Orelia-tagged
+  # monster has a custom name for its nametag HP bar, so every single kill would otherwise
+  # spam this) or "moved wrongly"/"moved too quickly" anti-cheat warnings that custom mob
+  # AI/teleports can trigger. Empty list = nothing suppressed. Takes effect immediately on
+  # /suadmin reload, no restart needed.
+  suppressed-patterns:
+    - "Named entity .* died"
+    - "moved wrongly"
+    - "moved too quickly"
+
 world-setup:
+  # /suadmin worldsetup <world> [profile] runs a named profile's "commands" list from the
+  # console, one command per line, with every {world} token replaced by the world name given
+  # on the command line first. Not limited to vanilla /gamerule - a command can be anything
+  # another plugin provides too (e.g. Multiverse-Core's "mv create"), including one that
+  # creates the world in the first place, so <world> doesn't need to already exist. A vanilla
+  # gamerule change needs the "execute in" wrapper below to target a *specific* world when run
+  # from console (plain "/gamerule ..." with no location context only ever affects the default
+  # world). Add more profiles as their own top-level key under "profiles" - "default" is just
+  # this plugin's own starter example.
   profiles:
     default:
-      gamerules:
-        spawn_mobs: false
-        advance_time: false
-        advance_weather: false
-        keep_inventory: true
-        command_block_output: false
-        mob_drops: false
-        locator_bar: false
+      commands:
+        - "execute in minecraft:{world} run gamerule doMobSpawning false"
+        - "execute in minecraft:{world} run gamerule doDaylightCycle false"
+        - "execute in minecraft:{world} run gamerule doWeatherCycle false"
+        - "execute in minecraft:{world} run gamerule keepInventory true"
+        - "execute in minecraft:{world} run gamerule commandBlockOutput false"
+        - "execute in minecraft:{world} run gamerule doMobLoot false"
+        - "execute in minecraft:{world} run gamerule locatorBar false"
 
 # Sidebar scoreboard. Other plugins register lines via rpg.serverutil.api.ScoreboardApi -
 # "lines" below is this plugin's own config-driven block (placeholders resolved per-viewer,

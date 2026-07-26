@@ -6,6 +6,11 @@ plugins {
 dependencies {
     implementation(project(":common"))
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    // Provided by the server at runtime (Paper bundles Log4j2) - see
+    // rpg.serverutil.paper.logfilter.LogFilterModule, which suppresses noisy console log lines
+    // by attaching a Log4j2 Filter directly. There's no Bukkit-level API for this since these
+    // lines come from Minecraft's own internal server code, not a plugin logger.
+    compileOnly("org.apache.logging.log4j:log4j-core:2.26.1")
     // Soft dependency only - StatusApi/EconomyApi are used opportunistically when OreliaCore
     // happens to be installed (see rpg.serverutil.paper.integration.CoreIntegrationModule).
     // Every ServicesManager lookup must null-guard; this plugin must start fine without it.

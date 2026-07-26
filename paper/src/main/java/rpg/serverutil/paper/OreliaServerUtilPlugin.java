@@ -11,6 +11,7 @@ import rpg.serverutil.paper.healthcheck.HealthCheckModule;
 import rpg.serverutil.paper.hub.HubModule;
 import rpg.serverutil.paper.integration.CoreIntegrationModule;
 import rpg.serverutil.paper.join.JoinMessageModule;
+import rpg.serverutil.paper.logfilter.LogFilterModule;
 import rpg.serverutil.paper.message.MessageManager;
 import rpg.serverutil.paper.module.ServerUtilModuleManager;
 import rpg.serverutil.paper.placeholder.PlaceholderService;
@@ -49,6 +50,9 @@ public final class OreliaServerUtilPlugin extends JavaPlugin {
 
         // Registration order doubles as dependency order, same convention as orelia-core.
         // Modules are added here across phases 2-4/6-7 of the implementation plan.
+        // No dependency on/from anything else here - registered first so console spam is
+        // suppressed as early into startup as possible.
+        moduleManager.register(new LogFilterModule());
         moduleManager.register(new SpawnModule());
         moduleManager.register(new WorldSetupModule());
         moduleManager.register(new VelocityBridgeModule());
