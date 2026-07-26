@@ -43,7 +43,7 @@ Orelia RPGプラグイン群（orelia-core / orelia-world / orelia-extra）と�
 
 - `reload`: config/messagesを再読み込みします。scoreboard/tablist/belowname/chat/announce/core-integrationはサーバー再起動不要でその場に反映されます（title・書式・行内容・更新間隔・ヘッダーフッターのon/off含む）。
 - `setspawn`: 実行者の現在地をそのワールドのスポーン地点に設定します（`World#setSpawnLocation`）。
-- `worldsetup <world> [profile]`: `config.yml`の`world-setup.profiles.<profile>.gamerules`を対象ワールドに一括適用します（`profile`省略時は`default`）。任意のバニラGameRule名がそのままキーとして使えます。
+- `worldsetup <world> [profile]`: `config.yml`の`world-setup.profiles.<profile>.commands`に列挙したコマンド列を、コンソール権限で順番に実行します（`profile`省略時は`default`）。各コマンド文字列中の`{world}`は対象ワールド名に置換されます。`gamerule`に限らず任意のコマンドを書けるため、他プラグイン（例: Multiverse-Coreのワールド操作コマンド）も同じ仕組みで実行できます。対象ワールドは事前に読み込まれている必要はありません（`{world}`置換のみで、ワールドの存在チェックはしません）。
 
 ## API（他プラグインからの連携）
 
@@ -74,9 +74,13 @@ Orelia RPGプラグイン群（orelia-core / orelia-world / orelia-extra）と�
 
 `admin-healthcheck.enabled: true`（既定）の場合、op権限のプレイヤーがjoinするとTPS/オンライン人数のサマリーを表示します。加えて`core-integration.enabled: true`（既定）の場合、OreliaCore/OreliaWorld/OreliaExtra/OreliaDebugそれぞれの導入状況とバージョンも1行で表示します。
 
+## コンソールログの抑制
+
+`log-filter.suppressed-patterns`（`config.yml`）に正規表現（大文字小文字区別なし、メッセージ全体に部分一致）を列挙すると、一致したコンソールログ行を非表示にできます。バニラ・他プラグイン問わず、Log4j2を通るサーバーの全ログ行が対象です（Bukkitのプラグイン用Loggerを経由しないログにも効きます）。デフォルトでは`Named entity .* died`（カスタム名前を持つエンティティの死亡ログ）、`moved wrongly`、`moved too quickly`（アンチチート系の移動警告）を抑制しています。`/suadmin reload`で設定変更が即時反映されます。
+
 ## config.yml 主要セクション
 
-`velocity`, `hub`, `world-setup.profiles.*`, `scoreboard`, `tablist`, `belowname`, `chat`, `join`, `announce`, `admin-healthcheck`, `core-integration`。各セクションの詳細はコメント付きで`config.yml`本体に記載しています。
+`log-filter`, `velocity`, `hub`, `world-setup.profiles.*`, `scoreboard`, `tablist`, `belowname`, `chat`, `join`, `announce`, `admin-healthcheck`, `core-integration`。各セクションの詳細はコメント付きで`config.yml`本体に記載しています。
 
 ## config/messagesの自動移行・バージョン管理
 

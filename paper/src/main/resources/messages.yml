@@ -19,10 +19,8 @@ spawn:
   set: "&%aワールド「{world}」のスポーン地点をここに設定しました。"
 
 worldsetup:
-  world-not-found: "&%c指定したワールドが見つかりません: {world}"
   profile-not-found: "&%c指定したプロファイルが見つかりません: {profile}"
-  applied: "&%aワールド「{world}」にプロファイル「{profile}」を適用しました。"
-  applied-with-warnings: "&%eワールド「{world}」にプロファイル「{profile}」を適用しました（未対応キー: {keys}）。"
+  applied: "&%aワールド「{world}」にプロファイル「{profile}」のコマンド{count}件を実行しました。"
 
 hub:
   not-configured: "&%cハブの座標が設定されていません（config.yml の hub.teleport を確認してください）。"

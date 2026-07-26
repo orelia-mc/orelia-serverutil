@@ -64,24 +64,18 @@ public final class SuAdminCommand implements CommandExecutor, TabCompleter {
             plugin.getMessageManager().send(sender, "usage.worldsetup");
             return;
         }
-        World world = Bukkit.getWorld(args[1]);
-        if (world == null) {
-            plugin.getMessageManager().send(sender, "worldsetup.world-not-found", "world", args[1]);
-            return;
-        }
+        // The world name doesn't have to resolve to an already-loaded World - a profile is
+        // free to be the thing that creates it (e.g. a Multiverse-Core "mv create" command).
+        String worldName = args[1];
         String profile = args.length >= 3 ? args[2] : "default";
         plugin.getModuleManager().get(WorldSetupModule.class).ifPresent(worldSetupModule -> {
-            var invalidKeys = worldSetupModule.applyProfile(world, profile);
-            if (invalidKeys.isEmpty()) {
+            var commandCount = worldSetupModule.applyProfile(worldName, profile);
+            if (commandCount.isEmpty()) {
                 plugin.getMessageManager().send(sender, "worldsetup.profile-not-found", "profile", profile);
                 return;
             }
-            if (invalidKeys.get().isEmpty()) {
-                plugin.getMessageManager().send(sender, "worldsetup.applied", "world", world.getName(), "profile", profile);
-            } else {
-                plugin.getMessageManager().send(sender, "worldsetup.applied-with-warnings",
-                        "world", world.getName(), "profile", profile, "keys", String.join(", ", invalidKeys.get()));
-            }
+            plugin.getMessageManager().send(sender, "worldsetup.applied",
+                    "world", worldName, "profile", profile, "count", commandCount.get());
         });
     }
 
