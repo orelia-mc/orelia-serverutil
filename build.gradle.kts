@@ -6,7 +6,7 @@ subprojects {
     apply(plugin = "java")
 
     group = "rpg"
-    version = "1.0.2"
+    version = "1.0.3"
 
     java {
         toolchain {
