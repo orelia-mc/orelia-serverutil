@@ -23,7 +23,7 @@ import java.nio.file.Path;
         name = "OreliaServerUtil",
         version = "1.0.0",
         description = "Orelia server utility plugin - hub transfer and server-switch notifications",
-        authors = {"orelia-mc"}
+        authors = {"rasp1220", "Nyaffle"}
 )
 public final class OreliaServerUtilVelocityPlugin {
 
