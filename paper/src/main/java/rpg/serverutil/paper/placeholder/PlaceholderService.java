@@ -4,6 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import rpg.api.EconomyApi;
 import rpg.api.JobApi;
+import rpg.api.PlayerProfile;
+import rpg.api.PlayerProfileApi;
 import rpg.api.StatusApi;
 import rpg.extra.api.GuildApi;
 import rpg.extra.api.PartyApi;
@@ -13,6 +15,8 @@ import rpg.world.api.QuestApi;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Single place every provider/module resolves {@code {token}} placeholders through, instead of
@@ -42,8 +46,13 @@ import java.time.format.DateTimeFormatter;
  * <p>If PlaceholderAPI is installed, any remaining {@code %...%} placeholders are resolved
  * through it last (see {@link PlaceholderApiHook}), so admins can mix in ranks/other plugins'
  * placeholders freely.
+ *
+ * <p>Also implements {@link PlayerProfileApi} ({@link #getProfile}) - the same cross-plugin
+ * aggregation above, exposed as a typed record and registered under that interface by
+ * {@code CoreIntegrationModule} so other plugins (orelia-extra's chat, for its player-name
+ * hover card) can consume it without depending on orelia-serverutil directly.
  */
-public final class PlaceholderService {
+public final class PlaceholderService implements PlayerProfileApi {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -136,5 +145,50 @@ public final class PlaceholderService {
             }
         }
         return result;
+    }
+
+    /**
+     * {@link PlayerProfileApi} entry point - registered under that interface by
+     * {@code CoreIntegrationModule} rather than this class moving anywhere (see
+     * dynamic-chat-design.md's "player name hover card" package). Same aggregation this class
+     * already does for {@code {level}}/{@code {job}}/{@code {guild}}/{@code {party}}/
+     * {@code {title}} placeholders, just returned as a typed record instead of spliced into a
+     * template string, and keyed off {@code UUID} alone since a hover card's target isn't
+     * necessarily the viewer.
+     */
+    @Override
+    public Optional<PlayerProfile> getProfile(UUID playerId) {
+        Player player = Bukkit.getPlayer(playerId);
+        if (player == null) {
+            return Optional.empty();
+        }
+        int level = 1;
+        StatusApi statusApi = plugin.getServer().getServicesManager().load(StatusApi.class);
+        if (statusApi != null) {
+            level = statusApi.getLevel(playerId).orElse(1);
+        }
+        String job = "";
+        JobApi jobApi = plugin.getServer().getServicesManager().load(JobApi.class);
+        if (jobApi != null) {
+            job = jobApi.getCurrentJobDisplayName(playerId).orElse("");
+        }
+        String guildName = "";
+        String guildTag = "";
+        GuildApi guildApi = plugin.getServer().getServicesManager().load(GuildApi.class);
+        if (guildApi != null) {
+            guildName = guildApi.getGuildName(playerId).orElse("");
+            guildTag = guildApi.getGuildTag(playerId).orElse("");
+        }
+        boolean inParty = false;
+        PartyApi partyApi = plugin.getServer().getServicesManager().load(PartyApi.class);
+        if (partyApi != null) {
+            inParty = partyApi.isInParty(playerId);
+        }
+        String title = "";
+        QuestApi questApi = plugin.getServer().getServicesManager().load(QuestApi.class);
+        if (questApi != null) {
+            title = questApi.getEquippedTitle(playerId).orElse("");
+        }
+        return Optional.of(new PlayerProfile(level, job, guildName, guildTag, inParty, title));
     }
 }

@@ -3,8 +3,10 @@ package rpg.serverutil.paper.integration;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.ServicePriority;
 import rpg.api.EconomyApi;
 import rpg.api.JobApi;
+import rpg.api.PlayerProfileApi;
 import rpg.api.StatusApi;
 import rpg.serverutil.api.BelownameApi;
 import rpg.serverutil.api.ChatApi;
@@ -64,6 +66,7 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         registerTabListValue(plugin, config, statusApi, placeholders);
         registerBelowname(plugin, config, jobApi, statusApi, placeholders);
         registerChatPlaceholder(plugin, config, jobApi, statusApi, placeholders);
+        registerPlayerProfileApi(plugin, placeholders);
     }
 
     @Override
@@ -152,6 +155,18 @@ public final class CoreIntegrationModule implements ServerUtilModule {
         }
         String format = config.getString("chat.core-placeholder.format", "&%7[Lv.{level}] &%b{job}&r ");
         chatApi.registerProvider(new CoreChatPlaceholderProvider(placeholders, format));
+    }
+
+    /**
+     * {@link PlaceholderService} already implements {@link PlayerProfileApi} - this just
+     * registers that same instance under the public interface so other plugins (orelia-extra's
+     * chat, for its player-name hover card) can look it up via {@code ServicesManager} without
+     * depending on orelia-serverutil directly. No per-feature {@code enabled} flag of its own -
+     * covered by this whole module's {@code core-integration.enabled} gate above, same as every
+     * other registration in this method.
+     */
+    private void registerPlayerProfileApi(OreliaServerUtilPlugin plugin, PlaceholderService placeholders) {
+        plugin.getServer().getServicesManager().register(PlayerProfileApi.class, placeholders, plugin, ServicePriority.Normal);
     }
 
     /**
