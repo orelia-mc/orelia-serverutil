@@ -160,7 +160,7 @@ tablist:
   # configurable).
   name-color:
     enabled: true
-    prefix-format: ""
+    prefix-format: "&%6{guild} {party}"
     suffix-format: " &%7[Lv.{level}] {title}"
     # NOTE: these must stay plain legacy &-codes (&0-&9/&a-&f), NOT the &%-prefixed custom
     # palette used everywhere else in this config - a job color feeds a scoreboard Team's
@@ -191,7 +191,7 @@ tablist:
 #     against). There is no separate "enabled" flag for this whole feature - it shows itself
 #     automatically the moment any provider produces a value, and hides again once none do.
 belowname:
-  title: "&%dSuffix"
+  title: ""
   update-interval-ticks: 20
   # OreliaCore-sourced per-target value (level + job by default) - requires
   # core-integration.enabled: true and OreliaCore installed. Genuinely differs per player
@@ -259,9 +259,9 @@ announce:
   enabled: true
   delay-ticks: 20
   lines:
-    - "&%3==============================="
-    - "&%b Welcome to Orelia Debug Server!"
-    - "&%3==============================="
+    - "&%e================="
+    - "&%6 Welcome to Orelia!"
+    - "&%e================="
   title:
     enabled: true
     title: "&%bOrelia Debug Server"
