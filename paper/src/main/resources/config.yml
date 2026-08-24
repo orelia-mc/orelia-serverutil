@@ -24,6 +24,8 @@ config-version: 3
 #                     built-in way to know what Velocity calls it)
 #     {date}        - yyyy-MM-dd
 #     {time}        - HH:mm:ss
+#     {x}/{y}/{z}   - the viewing player's current block coordinates
+#     {location}    - "{world} ({x}, {y}, {z})", a ready-made "current location" line
 #
 #   OreliaCore-sourced (silently left as literal text if OreliaCore isn't installed):
 #     {level}       - the player's OreliaCore level
@@ -129,6 +131,7 @@ scoreboard:
   lines:
     - " &%7Online: &%f{online}&%7/&%f{max_online} "
     - " &%7TPS: &%f{tps} "
+    - " &%7現在地: &%f{location} "
   # OreliaCore-sourced sidebar lines (level/money by default) - requires core-integration.enabled:
   # true and OreliaCore installed, otherwise this whole sub-section is a no-op. Renders above
   # "lines" above by default (registered at priority 100 vs "lines"/other plugins' priority 0).

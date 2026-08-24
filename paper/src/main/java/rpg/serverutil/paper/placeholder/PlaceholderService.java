@@ -25,7 +25,9 @@ import java.util.UUID;
  * <ul>
  *   <li>Built-in server tokens - always available, no OreliaCore needed:
  *       {@code {online}}/{@code {max_online}}/{@code {tps}}/{@code {ping}}/{@code {world}}/
- *       {@code {player}}/{@code {name}}/{@code {server}}/{@code {date}}/{@code {time}}.</li>
+ *       {@code {player}}/{@code {name}}/{@code {server}}/{@code {date}}/{@code {time}}/
+ *       {@code {x}}/{@code {y}}/{@code {z}} (the player's current block coordinates)/
+ *       {@code {location}} ({@code {world} ({x}, {y}, {z})}, a ready-made "current location" line).</li>
  *   <li>OreliaCore tokens - resolved via its published {@code rpg.api} interfaces
  *       (soft dependency, silently left as literal text if OreliaCore isn't installed):
  *       {@code {level}}/{@code {job}}/{@code {money}}/{@code {health}}/{@code {max_health}}.
@@ -78,6 +80,9 @@ public final class PlaceholderService implements PlayerProfileApi {
 
     private String resolveBuiltIn(String template, Player player) {
         String serverName = plugin.getConfigManager().get("config.yml").get().getString("server.name", "");
+        int x = player.getLocation().getBlockX();
+        int y = player.getLocation().getBlockY();
+        int z = player.getLocation().getBlockZ();
         return template
                 .replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()))
                 .replace("{max_online}", String.valueOf(Bukkit.getMaxPlayers()))
@@ -88,7 +93,11 @@ public final class PlaceholderService implements PlayerProfileApi {
                 .replace("{name}", player.getName())
                 .replace("{server}", serverName)
                 .replace("{date}", LocalDateTime.now().format(DATE_FORMAT))
-                .replace("{time}", LocalDateTime.now().format(TIME_FORMAT));
+                .replace("{time}", LocalDateTime.now().format(TIME_FORMAT))
+                .replace("{x}", String.valueOf(x))
+                .replace("{y}", String.valueOf(y))
+                .replace("{z}", String.valueOf(z))
+                .replace("{location}", player.getWorld().getName() + " (" + x + ", " + y + ", " + z + ")");
     }
 
     private String resolveCoreTokens(String template, Player player) {

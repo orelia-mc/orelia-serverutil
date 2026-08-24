@@ -59,7 +59,7 @@ Orelia RPGプラグイン群（orelia-core / orelia-world / orelia-extra）と�
 
 ### プレースホルダー
 
-各プロバイダーの`format`系設定は`rpg.serverutil.paper.placeholder.PlaceholderService`で解決されます。`{online}` `{tps}` `{ping}` `{world}` `{player}` `{server}` `{date}` `{time}`は常時使用可能、`{level}` `{job}` `{money}` `{health}` `{max_health}`はOreliaCore導入時のみ解決されます（`{health}`/`{max_health}`はバニラの体力ではなくOreliaCore独自のHPです。`{money}`は`1.5k`/`2m`/`3b`/`4t`のようなk/m/b/t表記です）。`{guild}` `{guild_tag}` `{party}`はOreliaExtra導入時のみ解決されます（未所属時は空文字）。`{title}`はOreliaWorld導入時のみ解決されます(未装備時は空文字)。PlaceholderAPIが導入されていれば`%...%`記法もそのまま使えます。全プレースホルダーの一覧は`config.yml`冒頭のコメントを参照してください。
+各プロバイダーの`format`系設定は`rpg.serverutil.paper.placeholder.PlaceholderService`で解決されます。`{online}` `{tps}` `{ping}` `{world}` `{player}` `{server}` `{date}` `{time}` `{x}` `{y}` `{z}`（プレイヤーの現在ブロック座標） `{location}`（`{world} ({x}, {y}, {z})`の組み立て済み現在地表示）は常時使用可能、デフォルトの`scoreboard.lines`にも`{location}`を使った現在地行が入っています。`{level}` `{job}` `{money}` `{health}` `{max_health}`はOreliaCore導入時のみ解決されます（`{health}`/`{max_health}`はバニラの体力ではなくOreliaCore独自のHPです。`{money}`は`1.5k`/`2m`/`3b`/`4t`のようなk/m/b/t表記です）。`{guild}` `{guild_tag}` `{party}`はOreliaExtra導入時のみ解決されます（未所属時は空文字）。`{title}`はOreliaWorld導入時のみ解決されます(未装備時は空文字)。PlaceholderAPIが導入されていれば`%...%`記法もそのまま使えます。全プレースホルダーの一覧は`config.yml`冒頭のコメントを参照してください。
 
 ## サーバー間移動時のjoin/leaveメッセージ
 
@@ -91,6 +91,10 @@ Orelia RPGプラグイン群（orelia-core / orelia-world / orelia-extra）と�
 1. `orelia-serverutil-velocity-*.jar`をVelocityの`plugins/`に配置して起動し、`plugins/orelia-serverutil/config.yml`を編集（`hub.server-name`をバックエンドサーバー名に合わせる）。
 2. 各Paperサーバー側の`config.yml`で`velocity.enabled: true`にし、`channel`がVelocity側と一致していることを確認。
 3. `/hub`の`hub.mode`を`PROXY`にする。
+
+## 実機E2E動作確認
+
+Paper+Velocity二重起動を伴う自動E2Eテストの基盤は現状ありません（`velocity`モジュールはVelocity APIが`compileOnly`のため、静的レビュー以外の検証手段がない）。手動での確認手順は[E2E_CHECKLIST.md](E2E_CHECKLIST.md)を参照してください。
 
 ## 開発時の注意（mavenLocal依存）
 
