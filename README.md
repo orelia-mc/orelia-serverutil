@@ -84,7 +84,7 @@ Orelia RPGプラグイン群（orelia-core / orelia-world / orelia-extra）と�
 
 ## config/messagesの自動移行・バージョン管理
 
-`config.yml`・`messages.yml`はどちらも先頭の`config-version`で管理されており、新しいjarで起動すると新規追加されたキー(既存セクション内部のネストしたキーも含む)は既存ファイルの正しい位置へ自動で追記されます(`rpg.serverutil.paper.config.ConfigMigrator`、OreliaCoreがsoftdependのため独立コピーを保持)。新しいトップレベルセクション・キーを追加したら、そのファイルの`config-version`を1つ上げてください。`main`へのpush(=PRマージ)ごとに`.github/workflows/version-bump.yml`が`build.gradle.kts`の`version`を自動でPATCHインクリメントし、タグを打ちます。互換性が壊れる変更は`bump:minor`、大規模な改修は`bump:major`ラベルをPRに付けてからマージしてください。そのタグのpushを受けて`.github/workflows/release.yml`がpaper/velocity両方のjarをビルドし、GitHub Releaseとして自動公開します(タグごと=マージごとに1つ)。
+`config.yml`・`messages.yml`はどちらも先頭の`config-version`で管理されており、新しいjarで起動すると新規追加されたキー(既存セクション内部のネストしたキーも含む)は既存ファイルの正しい位置へ自動で追記されます(`rpg.serverutil.paper.config.ConfigMigrator`、OreliaCoreがsoftdependのため独立コピーを保持)。新しいトップレベルセクション・キーを追加したら、そのファイルの`config-version`を1つ上げてください。`main`へのpush(=PRマージ)ごとに`.github/workflows/version-bump.yml`が`build.gradle.kts`の`version`を自動でPATCHインクリメントし、タグを打ちます。互換性が壊れる変更は`bump:minor`、大規模な改修は`bump:major`ラベルをPRに付けてからマージしてください。同じワークフロー内でpaper/velocity両方のjarをビルドし、GitHub Releaseとしても自動公開します(タグごと=マージごとに1つ。デフォルトの`GITHUB_TOKEN`によるtag pushは他のワークフローの起動トリガーにならないため、別ファイルではなくこの中で完結させています)。
 
 ## Velocity側のセットアップ
 
